@@ -2,21 +2,17 @@ const router = require("express").Router();
 const db = require("../db");
 
 router.post("/", async (req, res) => {
-  const { courseID, name, description, date, startTime, endTime } = req.body;
+  const { courseID, name, date } = req.body;
   if (!courseID || !name || !date) {
-    return res.sendStatus(400);
+    return res.status(400).json({
+      message: "courseID, name, and date must be included in request body",
+    });
   }
   try {
-    const exam = await db.createExam(
-      courseID,
-      name,
-      description,
-      date,
-      startTime,
-      endTime
-    );
+    const exam = await db.createExam(req.body);
     return res.status(201).json(exam);
-  } catch {
+  } catch (err) {
+    console.log(err);
     return res.sendStatus(500);
   }
 });
@@ -29,35 +25,36 @@ router.get("/:id", async (req, res) => {
       return res.sendStatus(404);
     }
     return res.status(200).json(exam);
-  } catch {
+  } catch (err) {
+    console.log(err);
     return res.sendStatus(500);
   }
 });
 
 router.put("/:id", async (req, res) => {
   const id = req.params.id;
-  const { courseID, name, description, date, startTime, endTime } = req.body;
-  if (!courseID || !name || !date) {
-    return res.sendStatus(400);
+  const { courseID, name, date } = req.body;
+  if (!name || !date) {
+    return res.status(400).json({
+      message: "name and date must be included in request body",
+    });
   }
   let exam;
   try {
     exam = await db.findExam(id);
     if (!exam) {
-      exam = await db.createExam(
-        courseID,
-        name,
-        description,
-        date,
-        startTime,
-        endTime,
-        id
-      );
+      if (!courseID) {
+        return res.status(400).json({
+          message: "courseID must be included in request body",
+        });
+      }
+      exam = await db.createExam(req.body, id);
       return res.status(201).json(exam);
     }
-    exam = await db.updateExam(id, name, description, date, startTime, endTime);
+    exam = await db.updateExam(id, req.body);
     return res.status(200).json(exam);
-  } catch {
+  } catch (err) {
+    console.log(err);
     return res.sendStatus(500);
   }
 });
@@ -71,7 +68,8 @@ router.delete("/:id", async (req, res) => {
     }
     await db.deleteExam(id);
     return res.sendStatus(204);
-  } catch {
+  } catch (err) {
+    console.log(err);
     return res.sendStatus(500);
   }
 });

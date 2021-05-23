@@ -2,20 +2,17 @@ const router = require("express").Router();
 const db = require("../db");
 
 router.post("/", async (req, res) => {
-  const { courseID, name, description, dueDate, dueTime } = req.body;
+  const { courseID, name, dueDate } = req.body;
   if (!courseID || !name || !dueDate) {
-    return res.sendStatus(400);
+    return res.status(400).json({
+      message: "courseID, name, and dueDate must be included in request body",
+    });
   }
   try {
-    const assignment = await db.createAssignment(
-      courseID,
-      name,
-      description,
-      dueDate,
-      dueTime
-    );
+    const assignment = await db.createAssignment(req.body);
     return res.status(201).json(assignment);
-  } catch {
+  } catch (err) {
+    console.log(err);
     return res.sendStatus(500);
   }
 });
@@ -28,42 +25,38 @@ router.get("/:id", async (req, res) => {
       return res.sendStatus(404);
     }
     return res.status(200).json(assignment);
-  } catch {
+  } catch (err) {
+    console.log(err);
     return res.sendStatus(500);
   }
 });
 
 router.put("/:id", async (req, res) => {
   const id = req.params.id;
-  const { courseID, name, description, dueDate, dueTime, isCompleted } =
-    req.body;
-  if (!courseID || !name || !dueDate) {
-    return res.sendStatus(400);
-  }
+  const { courseID, name, dueDate, isCompleted } = req.body;
   let assignment;
   try {
     assignment = await db.findAssignment(id);
     if (!assignment) {
-      assignment = await db.createAssignment(
-        courseID,
-        name,
-        description,
-        dueDate,
-        dueTime,
-        id
-      );
+      if (!courseID || !name || !dueDate) {
+        return res.status(400).json({
+          message:
+            "courseID, name, and dueDate must be included in request body",
+        });
+      }
+      assignment = await db.createAssignment(req.body, id);
       return res.status(201).json(assignment);
     }
-    assignment = await db.updateAssignment(
-      id,
-      name,
-      description,
-      dueDate,
-      dueTime,
-      isCompleted
-    );
+    if (!name || !dueDate || !isCompleted) {
+      return res.status(400).json({
+        message:
+          "name, dueDate, and isCompleted must be included in request body",
+      });
+    }
+    assignment = await db.updateAssignment(id, req.body);
     return res.status(200).json(assignment);
-  } catch {
+  } catch (err) {
+    console.log(err);
     return res.sendStatus(500);
   }
 });
@@ -77,7 +70,8 @@ router.delete("/:id", async (req, res) => {
     }
     await db.deleteAssignment(id);
     return res.sendStatus(204);
-  } catch {
+  } catch (err) {
+    console.log(err);
     return res.sendStatus(500);
   }
 });
