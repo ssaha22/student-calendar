@@ -42,26 +42,22 @@ CREATE TABLE additional_section_times (
 
 CREATE TABLE assignments (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
     course_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
     due_date DATE NOT NULL,
     due_time TIME, 
     is_completed BOOLEAN NOT NULL DEFAULT FALSE,
-    FOREIGN KEY (user_id) REFERENCES users ON DELETE CASCADE,
     FOREIGN KEY (course_id) REFERENCES courses ON DELETE CASCADE
 );
 
 CREATE TABLE exams (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
     course_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
     date DATE NOT NULL,
     start_time TIME,
     end_time TIME,
-    FOREIGN KEY (user_id) REFERENCES users ON DELETE CASCADE,
     FOREIGN KEY (course_id) REFERENCES courses ON DELETE CASCADE
 );
