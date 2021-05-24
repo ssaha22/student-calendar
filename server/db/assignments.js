@@ -61,9 +61,23 @@ async function deleteAssignment(id) {
   await pool.query("DELETE FROM assignments WHERE id = $1", [id]);
 }
 
+async function findAssignmentsForCourse(courseID) {
+  const { rows } = await pool.query(
+    `SELECT assignments.*, courses.user_id, courses.name AS course_name 
+    FROM assignments
+    INNER JOIN courses
+    ON assignments.course_id = courses.id
+    WHERE assignments.course_id = $1
+    ORDER BY due_date, due_time`,
+    [courseID]
+  );
+  return rows;
+}
+
 module.exports = {
   createAssignment,
   findAssignment,
   updateAssignment,
   deleteAssignment,
+  findAssignmentsForCourse,
 };

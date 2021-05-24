@@ -1,17 +1,90 @@
 const router = require("express").Router();
+const db = require("../db");
 
-router.get("/", (req, res) => res.send("hello"));
+router.post("/", async (req, res) => {
+  try {
+    const course = await db.createCourse(req.body);
+    return res.status(201).json(course);
+  } catch (err) {
+    console.log(err);
+    return res.sendStatus(500);
+  }
+});
 
-router.post("/");
+router.get("/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const course = await db.findCourse(id);
+    if (!course) {
+      return res.sendStatus(404);
+    }
+    return res.status(200).json(course);
+  } catch (err) {
+    console.log(err);
+    return res.sendStatus(500);
+  }
+});
 
-router.get("/:id");
+router.put("/:id", async (req, res) => {
+  const id = req.params.id;
+  let course;
+  try {
+    course = await db.findCourse(id);
+    if (!course) {
+      course = await db.createCourse(req.body, id);
+      return res.status(201).json(course);
+    }
+    course = await db.updateCourse(id, req.body);
+    return res.status(200).json(course);
+  } catch (err) {
+    console.log(err);
+    return res.sendStatus(500);
+  }
+});
 
-router.put("/:id");
+router.delete("/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const course = await db.findCourse(id);
+    if (!course) {
+      return res.sendStatus(404);
+    }
+    await db.deleteCourse(id);
+    return res.sendStatus(204);
+  } catch (err) {
+    console.log(err);
+    return res.sendStatus(500);
+  }
+});
 
-router.delete("/:id");
+router.get("/:id/assignments", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const course = await db.findCourse(id);
+    if (!course) {
+      return res.sendStatus(404);
+    }
+    const assignments = await db.findAssignmentsForCourse(id);
+    return res.status(200).json({ assignments });
+  } catch (err) {
+    console.log(err);
+    return res.sendStatus(500);
+  }
+});
 
-router.get("/:id/assignments");
-
-router.get("/:id/exams");
+router.get("/:id/exams", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const course = await db.findCourse(id);
+    if (!course) {
+      return res.sendStatus(404);
+    }
+    const exams = await db.findExamsForCourse(id);
+    return res.status(200).json({ exams });
+  } catch (err) {
+    console.log(err);
+    return res.sendStatus(500);
+  }
+});
 
 module.exports = router;

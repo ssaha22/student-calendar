@@ -1,10 +1,9 @@
-const { Pool } = require("pg");
+const courses = require("./courses");
 const assignments = require("./assignments");
 const exams = require("./exams");
 
-const pool = new Pool();
-
 module.exports = {
+  ...courses,
   ...assignments,
   ...exams,
 };
