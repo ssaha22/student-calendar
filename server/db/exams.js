@@ -1,6 +1,6 @@
 const { Pool } = require("pg");
-
 const pool = new Pool();
+const { convertKeysToCamelCase } = require("../utils");
 
 async function createExam(exam, id = null) {
   const { courseID, name, description, date, startTime, endTime } = exam;
@@ -33,7 +33,7 @@ async function findExam(id) {
     WHERE exams.id = $1`,
     [id]
   );
-  return res.rows[0];
+  return convertKeysToCamelCase(res.rows[0]);
 }
 
 async function updateExam(id, newExam) {
@@ -64,7 +64,7 @@ async function findExamsForCourse(courseID) {
     ORDER BY date, start_time`,
     [courseID]
   );
-  return rows;
+  return convertKeysToCamelCase(rows);
 }
 
 async function findExamsForUser(userID) {
@@ -81,7 +81,7 @@ async function findExamsForUser(userID) {
     ORDER BY date, start_time`,
     [userID]
   );
-  return rows;
+  return convertKeysToCamelCase(rows);
 }
 
 module.exports = {

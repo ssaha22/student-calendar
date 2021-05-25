@@ -1,6 +1,6 @@
 const { Pool } = require("pg");
-
 const pool = new Pool();
+const { convertKeysToCamelCase } = require("../utils");
 
 async function createCourse(course, id = null) {
   const {
@@ -92,7 +92,7 @@ async function findCourse(id) {
     delete section.id;
   }
   course.additionalSections = res.rows;
-  return course;
+  return convertKeysToCamelCase(course);
 }
 
 async function updateCourse(id, newCourse) {
@@ -113,7 +113,7 @@ async function findCoursesForUser(userID) {
     const course = await findCourse(row.id);
     courses.push(course);
   }
-  return courses;
+  return convertKeysToCamelCase(courses);
 }
 
 module.exports = {

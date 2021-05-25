@@ -1,5 +1,4 @@
 const { Pool } = require("pg");
-
 const pool = new Pool();
 
 async function createUser(email, password, id = null) {
