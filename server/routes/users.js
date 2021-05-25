@@ -1,16 +1,19 @@
 const router = require("express").Router();
+const bcrypt = require("bcrypt");
 const db = require("../db");
+const saltRounds = 10;
 
 router.post("/", async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, password } = req.body;
     let user = await db.findUserByEmail(email);
     if (user) {
       return res
         .status(400)
         .json({ message: "User with this email already exists" });
     }
-    user = await db.createUser(req.body);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    user = await db.createUser(email, hashedPassword);
     return res.status(201).json(user);
   } catch (err) {
     console.log(err);
@@ -34,14 +37,22 @@ router.get("/:id", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   const id = req.params.id;
+  const { email, password } = req.body;
   let user;
   try {
+    user = await db.findUserByEmail(email);
+    if (user && user.id != id) {
+      return res
+        .status(400)
+        .json({ message: "User with this email already exists" });
+    }
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
     user = await db.findUserByID(id);
     if (!user) {
-      user = await db.createUser(req.body, id);
+      user = await db.createUser(email, hashedPassword, id);
       return res.status(201).json(user);
     }
-    user = await db.updateUser(id, req.body);
+    user = await db.updateUser(id, email, hashedPassword);
     return res.status(200).json(user);
   } catch (err) {
     console.log(err);

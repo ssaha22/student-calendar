@@ -2,8 +2,7 @@ const { Pool } = require("pg");
 
 const pool = new Pool();
 
-async function createUser(user, id = null) {
-  const { email, password } = user;
+async function createUser(email, password, id = null) {
   let res;
   if (!id) {
     res = await pool.query(
@@ -29,11 +28,10 @@ async function findUserByEmail(email) {
   return res.rows[0];
 }
 
-async function updateUser(id, newUser) {
-  const { email, password } = newUser;
+async function updateUser(id, newEmail, newPassword) {
   const res = await pool.query(
     "UPDATE users SET email = $1, password = $2 WHERE id = $3 RETURNING *",
-    [email, password, id]
+    [newEmail, newPassword, id]
   );
   return res.rows[0];
 }

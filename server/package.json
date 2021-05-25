@@ -8,6 +8,7 @@
   "author": "Sayan Saha",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "dotenv": "^9.0.2",
     "express": "^4.17.1",
     "pg": "^8.6.0"
