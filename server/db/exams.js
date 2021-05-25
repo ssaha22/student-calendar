@@ -67,10 +67,28 @@ async function findExamsForCourse(courseID) {
   return rows;
 }
 
+async function findExamsForUser(userID) {
+  const { rows } = await pool.query(
+    `SELECT exams.*, courses.user_id, courses.name AS course_name 
+    FROM exams
+    INNER JOIN courses
+    ON exams.course_id = courses.id
+    WHERE exams.course_id IN (
+        SELECT id
+        FROM courses
+        WHERE courses.user_id = $1
+        )
+    ORDER BY date, start_time`,
+    [userID]
+  );
+  return rows;
+}
+
 module.exports = {
   createExam,
   findExam,
   updateExam,
   deleteExam,
   findExamsForCourse,
+  findExamsForUser,
 };

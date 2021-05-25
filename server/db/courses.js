@@ -104,9 +104,22 @@ async function deleteCourse(id) {
   await pool.query("DELETE FROM courses WHERE id = $1", [id]);
 }
 
+async function findCoursesForUser(userID) {
+  let courses = [];
+  const res = await pool.query("SELECT id FROM courses WHERE user_id = $1", [
+    userID,
+  ]);
+  for (const row of res.rows) {
+    const course = await findCourse(row.id);
+    courses.push(course);
+  }
+  return courses;
+}
+
 module.exports = {
   createCourse,
   findCourse,
   updateCourse,
   deleteCourse,
+  findCoursesForUser,
 };
