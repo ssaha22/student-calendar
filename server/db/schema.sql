@@ -23,6 +23,14 @@ CREATE TABLE course_times (
     FOREIGN KEY (course_id) REFERENCES courses ON DELETE CASCADE
 );
 
+CREATE TABLE links (
+    id SERIAL PRIMARY KEY,
+    course_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    FOREIGN KEY (course_id) REFERENCES courses ON DELETE CASCADE
+)
+
 CREATE TABLE additional_sections (
     id SERIAL PRIMARY KEY,
     course_id INTEGER NOT NULL,

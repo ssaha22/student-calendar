@@ -10,6 +10,7 @@ async function createCourse(course, id = null) {
     startDate,
     endDate,
     times,
+    links,
     additionalSections,
   } = course;
   if (!id) {
@@ -33,6 +34,14 @@ async function createCourse(course, id = null) {
         `INSERT INTO course_times (course_id, day, start_time, end_time)
         VALUES ($1, $2, $3, $4)`,
         [id, day.day, day.startTime, day.endTime]
+      );
+    }
+  }
+  if (links) {
+    for (const link of links) {
+      await pool.query(
+        "INSERT INTO links (course_id, name, url) VALUES ($1, $2, $3)",
+        [id, link.name, link.url]
       );
     }
   }
@@ -79,6 +88,10 @@ async function findCourse(id) {
     [id]
   );
   course.times = res.rows;
+  res = await pool.query(`SELECT name, url FROM links WHERE course_id = $1`, [
+    id,
+  ]);
+  course.links = res.rows;
   res = await pool.query(
     `SELECT id, type, section FROM additional_sections WHERE course_id = $1`,
     [id]
