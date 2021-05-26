@@ -11,9 +11,6 @@ async function createAssignment(assignment, id = null) {
     dueTime,
     isCompleted = false,
   } = assignment;
-  if (!courseID || !name || !dueDate) {
-    throw new Error("assignment must contain courseID, name, and dueDate");
-  }
   if (!id) {
     const res = await pool.query(
       `INSERT INTO assignments (course_id, name, description, due_date, due_time, is_completed) 
@@ -44,10 +41,13 @@ async function findAssignment(id) {
 }
 
 async function updateAssignment(id, newAssignment) {
-  const { name, description, dueDate, dueTime, isCompleted } = newAssignment;
-  if (!name || !dueDate || !isCompleted) {
-    throw new Error("assignment must contain name, dueDate, and isCompleted");
-  }
+  const {
+    name,
+    description,
+    dueDate,
+    dueTime,
+    isCompleted = false,
+  } = newAssignment;
   await pool.query(
     `UPDATE assignments 
     SET name = $1, description = $2, due_date = $3, due_time = $4, is_completed = $5

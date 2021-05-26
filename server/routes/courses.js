@@ -1,7 +1,11 @@
 const router = require("express").Router();
 const db = require("../db");
+const courseSchema = require("../schemas/course");
+const { validateRequestBody, validateRequestID } = require("../middlewares");
 
-router.post("/", async (req, res) => {
+router.param("id", validateRequestID);
+
+router.post("/", validateRequestBody(courseSchema), async (req, res) => {
   try {
     const course = await db.createCourse(req.body);
     return res.status(201).json(course);
@@ -25,7 +29,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", validateRequestBody(courseSchema), async (req, res) => {
   const id = req.params.id;
   let course;
   try {

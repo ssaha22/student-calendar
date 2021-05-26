@@ -1,9 +1,13 @@
 const router = require("express").Router();
 const bcrypt = require("bcrypt");
 const db = require("../db");
+const userSchema = require("../schemas/user");
+const { validateRequestBody, validateRequestID } = require("../middlewares");
 const saltRounds = 10;
 
-router.post("/", async (req, res) => {
+router.param("id", validateRequestID);
+
+router.post("/", validateRequestBody(userSchema), async (req, res) => {
   try {
     const { email, password } = req.body;
     let user = await db.findUserByEmail(email);
@@ -35,11 +39,15 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", validateRequestBody(userSchema), async (req, res) => {
   const id = req.params.id;
   const { email, password } = req.body;
   let user;
   try {
+    user = await db.findUserByID(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
     user = await db.findUserByEmail(email);
     if (user && user.id != id) {
       return res
@@ -47,11 +55,6 @@ router.put("/:id", async (req, res) => {
         .json({ message: "User with this email already exists" });
     }
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    user = await db.findUserByID(id);
-    if (!user) {
-      user = await db.createUser(email, hashedPassword, id);
-      return res.status(201).json(user);
-    }
     user = await db.updateUser(id, email, hashedPassword);
     return res.status(200).json(user);
   } catch (err) {

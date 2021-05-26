@@ -4,9 +4,6 @@ const { convertKeysToCamelCase } = require("../utils");
 
 async function createExam(exam, id = null) {
   const { courseID, name, description, date, startTime, endTime } = exam;
-  if (!courseID || !name || !date) {
-    throw new Error("exam must contain courseID, name, and date");
-  }
   if (!id) {
     const res = await pool.query(
       `INSERT INTO exams (course_id, name, description, date, start_time, end_time) 
@@ -38,9 +35,6 @@ async function findExam(id) {
 
 async function updateExam(id, newExam) {
   const { name, description, date, startTime, endTime } = newExam;
-  if (!name || !date) {
-    throw new Error("exam must contain name and date");
-  }
   await pool.query(
     `UPDATE exams 
     SET name = $1, description = $2, date = $3, start_time = $4, end_time = $5

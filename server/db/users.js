@@ -1,19 +1,11 @@
 const { Pool } = require("pg");
 const pool = new Pool();
 
-async function createUser(email, password, id = null) {
-  let res;
-  if (!id) {
-    res = await pool.query(
-      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
-      [email, password]
-    );
-  } else {
-    res = await pool.query(
-      "INSERT INTO users (id, email, password) VALUES ($1, $2, $3) RETURNING *",
-      [id, email, password]
-    );
-  }
+async function createUser(email, password) {
+  const res = await pool.query(
+    "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
+    [email, password]
+  );
   return res.rows[0];
 }
 

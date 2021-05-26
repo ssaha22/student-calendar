@@ -1,13 +1,11 @@
 const router = require("express").Router();
 const db = require("../db");
+const examSchema = require("../schemas/exam");
+const { validateRequestBody, validateRequestID } = require("../middlewares");
 
-router.post("/", async (req, res) => {
-  const { courseID, name, date } = req.body;
-  if (!courseID || !name || !date) {
-    return res.status(400).json({
-      message: "courseID, name, and date must be included in request body",
-    });
-  }
+router.param("id", validateRequestID);
+
+router.post("/", validateRequestBody(examSchema), async (req, res) => {
   try {
     const exam = await db.createExam(req.body);
     return res.status(201).json(exam);
@@ -31,23 +29,12 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", validateRequestBody(examSchema), async (req, res) => {
   const id = req.params.id;
-  const { courseID, name, date } = req.body;
-  if (!name || !date) {
-    return res.status(400).json({
-      message: "name and date must be included in request body",
-    });
-  }
   let exam;
   try {
     exam = await db.findExam(id);
     if (!exam) {
-      if (!courseID) {
-        return res.status(400).json({
-          message: "courseID must be included in request body",
-        });
-      }
       exam = await db.createExam(req.body, id);
       return res.status(201).json(exam);
     }

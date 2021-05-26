@@ -1,13 +1,11 @@
 const router = require("express").Router();
 const db = require("../db");
+const assignmentSchema = require("../schemas/assignment");
+const { validateRequestBody, validateRequestID } = require("../middlewares");
 
-router.post("/", async (req, res) => {
-  const { courseID, name, dueDate } = req.body;
-  if (!courseID || !name || !dueDate) {
-    return res.status(400).json({
-      message: "courseID, name, and dueDate must be included in request body",
-    });
-  }
+router.param("id", validateRequestID);
+
+router.post("/", validateRequestBody(assignmentSchema), async (req, res) => {
   try {
     const assignment = await db.createAssignment(req.body);
     return res.status(201).json(assignment);
@@ -31,27 +29,14 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", validateRequestBody(assignmentSchema), async (req, res) => {
   const id = req.params.id;
-  const { courseID, name, dueDate, isCompleted } = req.body;
   let assignment;
   try {
     assignment = await db.findAssignment(id);
     if (!assignment) {
-      if (!courseID || !name || !dueDate) {
-        return res.status(400).json({
-          message:
-            "courseID, name, and dueDate must be included in request body",
-        });
-      }
       assignment = await db.createAssignment(req.body, id);
       return res.status(201).json(assignment);
-    }
-    if (!name || !dueDate || !isCompleted) {
-      return res.status(400).json({
-        message:
-          "name, dueDate, and isCompleted must be included in request body",
-      });
     }
     assignment = await db.updateAssignment(id, req.body);
     return res.status(200).json(assignment);
