@@ -1,6 +1,6 @@
 const { Pool } = require("pg");
 const pool = new Pool();
-const { convertKeysToCamelCase } = require("../utils");
+const convertKeysToCamelCase = require("../utils/convertKeysToCamelCase");
 
 async function createAssignment(assignment, id = null) {
   const {
