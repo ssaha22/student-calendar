@@ -46,7 +46,7 @@ router.put("/:id", validateRequestBody(userSchema), async (req, res) => {
   try {
     user = await db.findUserByID(id);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.sendStatus(404);
     }
     user = await db.findUserByEmail(email);
     if (user && user.id != id) {

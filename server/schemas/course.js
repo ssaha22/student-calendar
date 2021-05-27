@@ -1,9 +1,20 @@
 const Joi = require("joi");
 const idSchema = require("./id");
-const { timeSchema } = require("./patterns");
+const { timeSchema, dateSchema } = require("./custom");
+const daysOfWeek = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 const daySchema = Joi.object({
-  day: Joi.string().required(),
+  day: Joi.string()
+    .valid(...daysOfWeek)
+    .required(),
   startTime: timeSchema.required(),
   endTime: timeSchema.required(),
 });
@@ -20,11 +31,12 @@ const sectionSchema = Joi.object({
 });
 
 const courseSchema = Joi.object({
+  id: idSchema,
   userID: idSchema.required(),
   name: Joi.string().required(),
   section: Joi.string(),
-  startDate: Joi.string().isoDate().required(),
-  endTime: Joi.string().isoDate().required(),
+  startDate: dateSchema,
+  endDate: dateSchema,
   times: Joi.array().items(daySchema),
   links: Joi.array().items(linkSchema),
   additionalSections: Joi.array().items(sectionSchema),

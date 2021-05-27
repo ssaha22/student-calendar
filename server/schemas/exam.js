@@ -1,12 +1,13 @@
 const Joi = require("joi");
 const idSchema = require("./id");
-const { timeSchema } = require("./patterns");
+const { dateSchema, timeSchema } = require("./custom");
 
 const examSchema = Joi.object({
+  id: idSchema,
   courseID: idSchema.required(),
   name: Joi.string().required(),
   description: Joi.string(),
-  date: Joi.string().isoDate().required(),
+  date: dateSchema.required(),
   startTime: timeSchema,
   endTime: timeSchema,
 });

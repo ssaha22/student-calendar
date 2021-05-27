@@ -1,7 +1,7 @@
 // recursively converts the keys of an object from snake_case to camelCase
 function convertKeysToCamelCase(obj) {
   const newObj = {};
-  if (obj === null || obj === undefined) {
+  if (obj === null || typeof obj !== "object") {
     return obj;
   }
   if (Array.isArray(obj)) {

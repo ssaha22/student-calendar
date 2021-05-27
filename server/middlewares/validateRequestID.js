@@ -1,11 +1,12 @@
-let idSchema = require("../schemas/id");
-idSchema = idSchema.error(new Error("request id must be a positive integer"));
+const idSchema = require("../schemas/id");
 
 async function validateRequestID(req, res, next, id) {
   try {
     await idSchema.validateAsync(id);
   } catch (err) {
-    return res.status(400).json({ message: err.message });
+    return res
+      .status(400)
+      .json({ message: "request id must be a positive integer" });
   }
   next();
 }

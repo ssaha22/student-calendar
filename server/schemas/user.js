@@ -1,7 +1,9 @@
 const Joi = require("joi");
-const { passwordSchema } = require("./patterns");
+const idSchema = require("./id");
+const { passwordSchema } = require("./custom");
 
 const userSchema = Joi.object({
+  id: idSchema,
   email: Joi.string().email().required(),
   password: passwordSchema.required(),
 });
