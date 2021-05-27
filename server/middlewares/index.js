@@ -1,9 +1,11 @@
 const validateRequestBody = require("./validateRequestBody");
 const validateRequestID = require("./validateRequestID");
-const find = require("./find");
+const findByID = require("./findByID");
+const checkExists = require("./checkExists");
 
 module.exports = {
   validateRequestBody,
   validateRequestID,
-  find,
+  findByID,
+  checkExists,
 };

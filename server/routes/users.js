@@ -5,7 +5,7 @@ const userSchema = require("../schemas/user");
 const {
   validateRequestBody,
   validateRequestID,
-  find,
+  findByID,
 } = require("../middlewares");
 const saltRounds = 10;
 
@@ -29,7 +29,7 @@ router.post("/", validateRequestBody(userSchema), async (req, res) => {
 
 router.param("id", validateRequestID);
 
-router.param("id", find("user"));
+router.param("id", findByID("user"));
 
 router.get("/:id", async (req, res) => {
   return res.status(200).json(req.user);
