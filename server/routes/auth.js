@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const jwt = require("../utils/promisifyJWT");
 const db = require("../db");
 const userSchema = require("../schemas/user");
 const { validateRequestBody } = require("../middlewares");
@@ -17,7 +17,7 @@ router.post("/register", validateRequestBody(userSchema), async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     user = await db.createUser(email, hashedPassword);
     const userID = user.id;
-    const authToken = jwt.sign(userID, process.env.JWT_SECRET);
+    const authToken = await jwt.sign({ userID }, process.env.JWT_SECRET);
     return res.status(200).json({ userID, token: authToken });
   } catch (err) {
     console.error(err);
@@ -37,7 +37,7 @@ router.post("/login", validateRequestBody(userSchema), async (req, res) => {
       return res.status(400).json({ message: "Incorrect password" });
     }
     const userID = user.id;
-    const authToken = jwt.sign({ userID }, process.env.JWT_SECRET);
+    const authToken = await jwt.sign({ userID }, process.env.JWT_SECRET);
     return res.status(200).json({ userID, authToken });
   } catch (err) {
     console.error(err);

@@ -1,6 +1,6 @@
-const jwt = require("jsonwebtoken");
+const jwt = require("../utils/promisifyJWT");
 
-function authorizeUser(req, res, next) {
+async function authorizeUser(req, res, next) {
   const authToken = req.header("Authorization");
   if (!authToken) {
     return res
@@ -8,7 +8,7 @@ function authorizeUser(req, res, next) {
       .json({ message: "Request header must include authorization token" });
   }
   try {
-    const decoded = jwt.verify(authToken, process.env.JWT_SECRET);
+    const decoded = await jwt.verify(authToken, process.env.JWT_SECRET);
     const userID = decoded.userID;
     if (!userID) {
       return res.status(401).json({ message: "Invalid authorization token" });
