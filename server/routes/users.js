@@ -7,33 +7,10 @@ const {
   validateRequestID,
   findByID,
 } = require("../middlewares");
-const saltRounds = 10;
-
-router.post("/", validateRequestBody(userSchema), async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    let user = await db.findUserByEmail(email);
-    if (user) {
-      return res
-        .status(400)
-        .json({ message: "User with this email already exists" });
-    }
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    user = await db.createUser(email, hashedPassword);
-    return res.status(201).json(user);
-  } catch (err) {
-    console.error(err);
-    return res.sendStatus(500);
-  }
-});
 
 router.param("id", validateRequestID);
 
 router.param("id", findByID("user"));
-
-router.get("/:id", async (req, res) => {
-  return res.status(200).json(req.user);
-});
 
 router.put("/:id", validateRequestBody(userSchema), async (req, res) => {
   const id = req.params.id;
@@ -52,9 +29,12 @@ router.put("/:id", validateRequestBody(userSchema), async (req, res) => {
         .status(400)
         .json({ message: "User with this email already exists" });
     }
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    user = await db.updateUser(id, email, hashedPassword);
-    return res.status(200).json(user);
+    const hashedPassword = await bcrypt.hash(
+      password,
+      parseInt(process.env.SALT_ROUNDS)
+    );
+    await db.updateUser(id, email, hashedPassword);
+    return res.sendStatus(204);
   } catch (err) {
     console.error(err);
     return res.sendStatus(500);
