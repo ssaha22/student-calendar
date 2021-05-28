@@ -14,6 +14,9 @@ router.post(
   checkExists("course"),
   async (req, res) => {
     try {
+      if (req.courseUserID !== req.userID) {
+        res.sendStatus(403);
+      }
       const assignment = await db.createAssignment(req.body);
       return res.status(201).json(assignment);
     } catch (err) {
@@ -26,6 +29,13 @@ router.post(
 router.param("id", validateRequestID);
 
 router.param("id", findByID("assignment"));
+
+router.use((req, res, next) => {
+  if (req.assignment && req.userID !== req.assignment.userID) {
+    res.sendStatus(403);
+  }
+  next();
+});
 
 router.get("/:id", async (req, res) => {
   return res.status(200).json(req.assignment);
@@ -40,6 +50,9 @@ router.put(
     let assignment;
     try {
       if (!req.assignment) {
+        if (req.courseUserID !== req.userID) {
+          res.sendStatus(403);
+        }
         assignment = await db.createAssignment(req.body, id);
         return res.status(201).json(assignment);
       }

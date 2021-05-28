@@ -11,6 +11,7 @@ function checkExists(option) {
           break;
         case "course":
           value = await db.findCourse(id);
+          value && (req.courseUserID = value.userID);
           break;
         default:
           throw Error("option must be one of user or course");

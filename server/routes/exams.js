@@ -14,6 +14,9 @@ router.post(
   checkExists("course"),
   async (req, res) => {
     try {
+      if (req.courseUserID !== req.userID) {
+        res.sendStatus(403);
+      }
       const exam = await db.createExam(req.body);
       return res.status(201).json(exam);
     } catch (err) {
@@ -27,6 +30,13 @@ router.param("id", validateRequestID);
 
 router.param("id", findByID("exam"));
 
+router.use((req, res, next) => {
+  if (req.exam && req.userID !== req.exam.userID) {
+    res.sendStatus(403);
+  }
+  next();
+});
+
 router.get("/:id", async (req, res) => {
   return res.status(200).json(req.exam);
 });
@@ -39,6 +49,9 @@ router.put(
     let exam;
     try {
       if (!req.exam) {
+        if (req.courseUserID !== req.userID) {
+          res.sendStatus(403);
+        }
         exam = await db.createExam(req.body, id);
         return res.status(201).json(exam);
       }

@@ -10,6 +10,13 @@ const {
 
 router.param("id", validateRequestID);
 
+router.param("id", (req, res, next, id) => {
+  if (req.userID !== id) {
+    res.sendStatus(403);
+  }
+  next();
+});
+
 router.param("id", findByID("user"));
 
 router.put("/:id", validateRequestBody(userSchema), async (req, res) => {
@@ -20,7 +27,7 @@ router.put("/:id", validateRequestBody(userSchema), async (req, res) => {
     if (!req.user) {
       return res.status(404).json({
         message:
-          "User not found. To create a new user send a POST request to /users.",
+          "User not found. To create a new user send a POST request to /register.",
       });
     }
     user = await db.findUserByEmail(email);
@@ -29,10 +36,7 @@ router.put("/:id", validateRequestBody(userSchema), async (req, res) => {
         .status(400)
         .json({ message: "User with this email already exists" });
     }
-    const hashedPassword = await bcrypt.hash(
-      password,
-      parseInt(process.env.SALT_ROUNDS)
-    );
+    const hashedPassword = await bcrypt.hash(password, 10);
     await db.updateUser(id, email, hashedPassword);
     return res.sendStatus(204);
   } catch (err) {

@@ -1,6 +1,6 @@
 const db = require("../db");
 
-function find(option) {
+function findByID(option) {
   return async (req, res, next, id) => {
     let value;
     try {
@@ -34,4 +34,4 @@ function find(option) {
   };
 }
 
-module.exports = find;
+module.exports = findByID;
