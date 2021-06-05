@@ -1,13 +1,15 @@
 const validateRequestBody = require("./validateRequestBody");
 const validateRequestID = require("./validateRequestID");
-const findByID = require("./findByID");
+const find = require("./find");
 const checkExists = require("./checkExists");
 const authorizeUser = require("./authorizeUser");
+const verifyUser = require("./verifyUser");
 
 module.exports = {
   validateRequestBody,
   validateRequestID,
-  findByID,
-  checkExists,
+  ...find,
+  ...checkExists,
   authorizeUser,
+  ...verifyUser,
 };

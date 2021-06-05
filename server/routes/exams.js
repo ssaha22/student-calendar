@@ -4,19 +4,22 @@ const examSchema = require("../schemas/exam");
 const {
   validateRequestBody,
   validateRequestID,
-  findByID,
-  checkExists,
+  findExam,
+  checkCourseExists,
+  verifyExamUser,
 } = require("../middlewares");
+
+router.param("id", validateRequestID);
+
+router.param("id", findExam);
 
 router.post(
   "/",
   validateRequestBody(examSchema),
-  checkExists("course"),
+  checkCourseExists,
+  verifyExamUser,
   async (req, res) => {
     try {
-      if (req.courseUserID !== req.userID) {
-        res.sendStatus(403);
-      }
       const exam = await db.createExam(req.body);
       return res.status(201).json(exam);
     } catch (err) {
@@ -26,32 +29,20 @@ router.post(
   }
 );
 
-router.param("id", validateRequestID);
-
-router.param("id", findByID("exam"));
-
-router.use((req, res, next) => {
-  if (req.exam && req.userID !== req.exam.userID) {
-    res.sendStatus(403);
-  }
-  next();
-});
-
-router.get("/:id", async (req, res) => {
+router.get("/:id", verifyExamUser, (req, res) => {
   return res.status(200).json(req.exam);
 });
 
 router.put(
   "/:id",
   validateRequestBody(examSchema),
-  checkExists("course"),
+  checkCourseExists,
+  verifyExamUser,
   async (req, res) => {
+    const id = req.params.id;
     let exam;
     try {
       if (!req.exam) {
-        if (req.courseUserID !== req.userID) {
-          res.sendStatus(403);
-        }
         exam = await db.createExam(req.body, id);
         return res.status(201).json(exam);
       }
@@ -64,7 +55,7 @@ router.put(
   }
 );
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", verifyExamUser, async (req, res) => {
   try {
     await db.deleteExam(req.params.id);
     return res.sendStatus(204);

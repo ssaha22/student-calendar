@@ -4,19 +4,22 @@ const courseSchema = require("../schemas/course");
 const {
   validateRequestBody,
   validateRequestID,
-  findByID,
-  checkExists,
+  findCourse,
+  checkUserExists,
+  verifyCourseUser,
 } = require("../middlewares");
+
+router.param("id", validateRequestID);
+
+router.param("id", findCourse);
 
 router.post(
   "/",
   validateRequestBody(courseSchema),
-  checkExists("user"),
+  checkUserExists,
+  verifyCourseUser,
   async (req, res) => {
     try {
-      if (req.body.userID !== req.userID) {
-        res.sendStatus(403);
-      }
       const course = await db.createCourse(req.body);
       return res.status(201).json(course);
     } catch (err) {
@@ -26,32 +29,20 @@ router.post(
   }
 );
 
-router.param("id", validateRequestID);
-
-router.param("id", findByID("course"));
-
-router.use((req, res, next) => {
-  if (req.course && req.userID !== req.course.userID) {
-    res.sendStatus(403);
-  }
-  next();
-});
-
-router.get("/:id", async (req, res) => {
+router.get("/:id", verifyCourseUser, (req, res) => {
   return res.status(200).json(req.course);
 });
 
 router.put(
   "/:id",
   validateRequestBody(courseSchema),
-  checkExists("user"),
+  checkUserExists,
+  verifyCourseUser,
   async (req, res) => {
+    const id = req.params.id;
     let course;
     try {
       if (!req.course) {
-        if (req.body.userID !== req.userID) {
-          res.sendStatus(403);
-        }
         course = await db.createCourse(req.body, id);
         return res.status(201).json(course);
       }
@@ -64,7 +55,7 @@ router.put(
   }
 );
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", verifyCourseUser, async (req, res) => {
   try {
     await db.deleteCourse(req.params.id);
     return res.sendStatus(204);
@@ -74,7 +65,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-router.get("/:id/assignments", async (req, res) => {
+router.get("/:id/assignments", verifyCourseUser, async (req, res) => {
   try {
     const assignments = await db.findAssignmentsForCourse(req.params.id);
     return res.status(200).json({ assignments });
@@ -84,7 +75,7 @@ router.get("/:id/assignments", async (req, res) => {
   }
 });
 
-router.get("/:id/exams", async (req, res) => {
+router.get("/:id/exams", verifyCourseUser, async (req, res) => {
   try {
     const exams = await db.findExamsForCourse(req.params.id);
     return res.status(200).json({ exams });

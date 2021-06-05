@@ -1,4 +1,5 @@
 const removeEmptyValues = require("../utils/removeEmptyValues");
+
 const options = {
   errors: {
     wrap: {
@@ -9,11 +10,14 @@ const options = {
 
 function validateRequestBody(schema) {
   return async (req, res, next) => {
+    if (req.method !== "POST" && req.method !== "PUT") {
+      return next();
+    }
     let body = removeEmptyValues(req.body);
     try {
       body = await schema.validateAsync(body, options);
       req.body = body;
-      next();
+      return next();
     } catch (err) {
       return res.status(400).json({ message: err.message });
     }

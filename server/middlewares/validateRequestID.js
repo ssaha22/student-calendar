@@ -1,6 +1,6 @@
 const idSchema = require("../schemas/id");
 
-async function validateRequestID(req, res, next, id) {
+async function validateRequestID(_req, res, next, id) {
   try {
     await idSchema.validateAsync(id);
   } catch (err) {
@@ -8,7 +8,7 @@ async function validateRequestID(req, res, next, id) {
       .status(400)
       .json({ message: "request id must be a positive integer" });
   }
-  next();
+  return next();
 }
 
 module.exports = validateRequestID;

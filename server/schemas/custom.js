@@ -1,5 +1,17 @@
 const Joi = require("joi");
 
+const daysOfWeek = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+const dayOfWeekSchema = Joi.string().valid(...daysOfWeek);
+
 const timeSchema = Joi.string()
   .pattern(
     /^((1[0-2]|0?[1-9]):([0-5][0-9]) ?([aApP][mM]))|(([0-1]?[0-9]|2[0-3]):[0-5][0-9])$/
@@ -20,6 +32,7 @@ const dateSchema = Joi.string()
   .message("{#label} must be in YYYY-MM-DD format");
 
 module.exports = {
+  dayOfWeekSchema,
   timeSchema,
   passwordSchema,
   dateSchema,

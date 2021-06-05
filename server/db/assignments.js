@@ -81,10 +81,10 @@ async function findAssignmentsForUser(userID) {
     INNER JOIN courses
     ON assignments.course_id = courses.id
     WHERE assignments.course_id IN (
-        SELECT id
-        FROM courses
-        WHERE courses.user_id = $1
-        )
+      SELECT id
+      FROM courses
+      WHERE courses.user_id = $1
+      )
     ORDER BY due_date, due_time`,
     [userID]
   );

@@ -1,20 +1,9 @@
 const Joi = require("joi");
 const idSchema = require("./id");
-const { timeSchema, dateSchema } = require("./custom");
-const daysOfWeek = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
+const { dayOfWeekSchema, timeSchema, dateSchema } = require("./custom");
 
 const daySchema = Joi.object({
-  day: Joi.string()
-    .valid(...daysOfWeek)
-    .required(),
+  day: dayOfWeekSchema.required(),
   startTime: timeSchema.required(),
   endTime: timeSchema.required(),
 });

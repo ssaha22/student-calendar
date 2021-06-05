@@ -18,7 +18,7 @@ router.post("/register", validateRequestBody(userSchema), async (req, res) => {
     user = await db.createUser(email, hashedPassword);
     const userID = user.id;
     const authToken = await jwt.sign({ userID }, process.env.JWT_SECRET);
-    return res.status(200).json({ userID, token: authToken });
+    return res.status(200).json({ userID, authToken });
   } catch (err) {
     console.error(err);
     return res.sendStatus(500);

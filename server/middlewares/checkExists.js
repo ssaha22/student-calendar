@@ -1,7 +1,15 @@
 const db = require("../db");
 
+const options = ["user", "course"];
+
 function checkExists(option) {
+  if (!options.includes(option)) {
+    throw Error(`option must be one of ${options}`);
+  }
   return async (req, res, next) => {
+    if (req.method !== "POST" && req.method !== "PUT") {
+      return next();
+    }
     const id = req.body[`${option}ID`];
     let value;
     try {
@@ -13,15 +21,13 @@ function checkExists(option) {
           value = await db.findCourse(id);
           value && (req.courseUserID = value.userID);
           break;
-        default:
-          throw Error("option must be one of user or course");
       }
       if (!value) {
         return res
           .status(400)
           .json({ message: `${option} with id = ${id} not found` });
       }
-      next();
+      return next();
     } catch (err) {
       console.error(err);
       return res.sendStatus(500);
@@ -29,4 +35,7 @@ function checkExists(option) {
   };
 }
 
-module.exports = checkExists;
+module.exports = {
+  checkUserExists: checkExists("user"),
+  checkCourseExists: checkExists("course"),
+};

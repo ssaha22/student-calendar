@@ -5,19 +5,15 @@ const userSchema = require("../schemas/user");
 const {
   validateRequestBody,
   validateRequestID,
-  findByID,
+  findUser,
+  verifyUser,
 } = require("../middlewares");
 
 router.param("id", validateRequestID);
 
-router.param("id", (req, res, next, id) => {
-  if (req.userID !== id) {
-    res.sendStatus(403);
-  }
-  next();
-});
+router.param("id", verifyUser);
 
-router.param("id", findByID("user"));
+router.param("id", findUser);
 
 router.put("/:id", validateRequestBody(userSchema), async (req, res) => {
   const id = req.params.id;

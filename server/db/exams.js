@@ -68,10 +68,10 @@ async function findExamsForUser(userID) {
     INNER JOIN courses
     ON exams.course_id = courses.id
     WHERE exams.course_id IN (
-        SELECT id
-        FROM courses
-        WHERE courses.user_id = $1
-        )
+      SELECT id
+      FROM courses
+      WHERE courses.user_id = $1
+      )
     ORDER BY date, start_time`,
     [userID]
   );

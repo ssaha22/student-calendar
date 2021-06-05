@@ -1,6 +1,11 @@
 const db = require("../db");
 
-function findByID(option) {
+const options = ["user", "course", "assignment", "exam"];
+
+function find(option) {
+  if (!options.includes(option)) {
+    throw Error(`option must be one of ${options}`);
+  }
   return async (req, res, next, id) => {
     let value;
     try {
@@ -17,16 +22,12 @@ function findByID(option) {
         case "exam":
           value = await db.findExam(id);
           break;
-        default:
-          throw Error(
-            "option must be one of user, course, assignment, or exam"
-          );
       }
       if (!value && req.method !== "PUT") {
         return res.status(404).json({ message: `${option} not found` });
       }
       req[option] = value;
-      next();
+      return next();
     } catch (err) {
       console.error(err);
       return res.sendStatus(500);
@@ -34,4 +35,9 @@ function findByID(option) {
   };
 }
 
-module.exports = findByID;
+module.exports = {
+  findUser: find("user"),
+  findCourse: find("course"),
+  findAssignment: find("assignment"),
+  findExam: find("exam"),
+};

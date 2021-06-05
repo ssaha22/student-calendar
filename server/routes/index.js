@@ -7,10 +7,15 @@ const assignmentsRoute = require("./assignments");
 const examsRoute = require("./exams");
 
 router.use("/", authRoute);
+
 router.use(authorizeUser);
+
 router.use("/users", usersRoute);
+
 router.use("/courses", coursesRoute);
+
 router.use("/assignments", assignmentsRoute);
+
 router.use("/exams", examsRoute);
 
 module.exports = router;
