@@ -69,3 +69,12 @@ CREATE TABLE exams (
     end_time TIME,
     FOREIGN KEY (course_id) REFERENCES courses ON DELETE CASCADE
 );
+
+CREATE TABLE google_api_info (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    refresh_token TEXT NOT NULL,
+    calendar_id TEXT,
+    time_zone TEXT,
+    FOREIGN KEY (user_id) REFERENCES users ON DELETE CASCADE
+);
