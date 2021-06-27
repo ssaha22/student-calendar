@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const db = require("../db");
+const calendar = require("../calendar");
 const examSchema = require("../schemas/exam");
 const {
   validateRequestBody,
@@ -21,7 +22,8 @@ router.post(
   async (req, res) => {
     try {
       const exam = await db.createExam(req.body);
-      return res.status(201).json(exam);
+      res.status(201).json(exam);
+      return await calendar.addExam(exam);
     } catch (err) {
       console.error(err);
       return res.sendStatus(500);
@@ -44,7 +46,8 @@ router.put(
     try {
       if (!req.exam) {
         exam = await db.createExam(req.body, id);
-        return res.status(201).json(exam);
+        res.status(201).json(exam);
+        return await calendar.addExam(exam);
       }
       exam = await db.updateExam(id, req.body);
       return res.status(200).json(exam);

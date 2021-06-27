@@ -69,6 +69,7 @@ CREATE TABLE exams (
     date DATE NOT NULL,
     start_time TIME,
     end_time TIME,
+    google_calendar_event_id TEXT,
     FOREIGN KEY (course_id) REFERENCES courses ON DELETE CASCADE
 );
 

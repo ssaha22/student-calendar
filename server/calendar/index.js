@@ -42,7 +42,7 @@ async function createCalendar(userID) {
     const timeZone = res.data.value;
     res = await calendar.calendars.insert({
       requestBody: {
-        summary: "Courses",
+        summary: "Course Scheduler",
         timeZone,
       },
     });
@@ -191,9 +191,46 @@ async function removeCourse(course) {
   }
 }
 
+async function addExam(exam) {
+  try {
+    const { id, userID, courseName, name, date, startTime, endTime } = exam;
+    let res = await pool.query(
+      "SELECT calendar_id, time_zone FROM google_api_info WHERE user_id = $1",
+      [userID]
+    );
+    const { calendarID, timeZone } = convertKeysToCamelCase(res.rows[0]);
+    if (!calendarID) {
+      return;
+    }
+    const calendar = await getAuthenticatedCalendar(userID);
+    const event = {
+      summary: `${courseName} ${name}`,
+      start: {
+        dateTime: `${format(date, "yyyy-MM-dd")}T${startTime}`,
+        timeZone,
+      },
+      end: {
+        dateTime: `${format(date, "yyyy-MM-dd")}T${endTime}`,
+        timeZone,
+      },
+    };
+    res = await calendar.events.insert({
+      calendarId: calendarID,
+      requestBody: event,
+    });
+    await pool.query(
+      "UPDATE exams SET google_calendar_event_id = $1 WHERE id = $2",
+      [res.data.id, id]
+    );
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 module.exports = {
   createCalendar,
   addCourse,
   updateCourse,
   removeCourse,
+  addExam,
 };
