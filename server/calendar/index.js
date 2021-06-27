@@ -203,17 +203,30 @@ async function addExam(exam) {
       return;
     }
     const calendar = await getAuthenticatedCalendar(userID);
-    const event = {
-      summary: `${courseName} ${name}`,
-      start: {
-        dateTime: `${format(date, "yyyy-MM-dd")}T${startTime}`,
-        timeZone,
-      },
-      end: {
-        dateTime: `${format(date, "yyyy-MM-dd")}T${endTime}`,
-        timeZone,
-      },
-    };
+    let event;
+    if (startTime && endTime) {
+      event = {
+        summary: `${courseName} ${name}`,
+        start: {
+          dateTime: `${format(date, "yyyy-MM-dd")}T${startTime}`,
+          timeZone,
+        },
+        end: {
+          dateTime: `${format(date, "yyyy-MM-dd")}T${endTime}`,
+          timeZone,
+        },
+      };
+    } else {
+      event = {
+        summary: `${courseName} ${name}`,
+        start: {
+          date: `${format(date, "yyyy-MM-dd")}`,
+        },
+        end: {
+          date: `${format(date, "yyyy-MM-dd")}`,
+        },
+      };
+    }
     res = await calendar.events.insert({
       calendarId: calendarID,
       requestBody: event,
@@ -227,10 +240,87 @@ async function addExam(exam) {
   }
 }
 
+async function updateExam(exam) {
+  try {
+    const {
+      userID,
+      courseName,
+      name,
+      date,
+      startTime,
+      endTime,
+      googleCalendarEventID,
+    } = exam;
+    let res = await pool.query(
+      "SELECT calendar_id, time_zone FROM google_api_info WHERE user_id = $1",
+      [userID]
+    );
+    const { calendarID, timeZone } = convertKeysToCamelCase(res.rows[0]);
+    if (!calendarID) {
+      return;
+    }
+    const calendar = await getAuthenticatedCalendar(userID);
+    let event;
+    if (startTime && endTime) {
+      event = {
+        summary: `${courseName} ${name}`,
+        start: {
+          dateTime: `${format(date, "yyyy-MM-dd")}T${startTime}`,
+          timeZone,
+        },
+        end: {
+          dateTime: `${format(date, "yyyy-MM-dd")}T${endTime}`,
+          timeZone,
+        },
+      };
+    } else {
+      event = {
+        summary: `${courseName} ${name}`,
+        start: {
+          date: `${format(date, "yyyy-MM-dd")}`,
+        },
+        end: {
+          date: `${format(date, "yyyy-MM-dd")}`,
+        },
+      };
+    }
+    await calendar.events.update({
+      calendarId: calendarID,
+      eventId: googleCalendarEventID,
+      requestBody: event,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function removeExam(exam) {
+  try {
+    const { userID, googleCalendarEventID } = exam;
+    let res = await pool.query(
+      "SELECT calendar_id FROM google_api_info WHERE user_id = $1",
+      [userID]
+    );
+    const { calendarID } = convertKeysToCamelCase(res.rows[0]);
+    if (!calendarID) {
+      return;
+    }
+    const calendar = await getAuthenticatedCalendar(userID);
+    await calendar.events.delete({
+      calendarId: calendarID,
+      eventId: googleCalendarEventID,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 module.exports = {
   createCalendar,
   addCourse,
   updateCourse,
   removeCourse,
   addExam,
+  updateExam,
+  removeExam,
 };

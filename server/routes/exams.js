@@ -50,7 +50,8 @@ router.put(
         return await calendar.addExam(exam);
       }
       exam = await db.updateExam(id, req.body);
-      return res.status(200).json(exam);
+      res.status(200).json(exam);
+      return await calendar.updateExam(exam);
     } catch (err) {
       console.error(err);
       return res.sendStatus(500);
@@ -61,7 +62,8 @@ router.put(
 router.delete("/:id", verifyExamUser, async (req, res) => {
   try {
     await db.deleteExam(req.params.id);
-    return res.sendStatus(204);
+    res.sendStatus(204);
+    return await calendar.removeExam(req.exam);
   } catch (err) {
     console.error(err);
     return res.sendStatus(500);
