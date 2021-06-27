@@ -15,68 +15,6 @@ const daysOfWeek = [
   "Saturday",
 ];
 
-const refreshToken =
-  "1//04a8DaqcbZ3RLCgYIARAAGAQSNwF-L9IrvaF4E4Im03c_-4dBTxzDSXYzsH3Eo7LY_xKHVHVvXyvgECaa6yd59Ca0cKchHa97xnI";
-
-const exampleCourse = {
-  userID: 1,
-  name: "CPSC 110",
-  section: "202",
-  startDate: "2021-06-29",
-  endDate: "2021-07-28",
-  times: [
-    {
-      day: "Monday",
-      startTime: "13:00:00",
-      endTime: "15:00:00",
-    },
-    {
-      day: "Wednesday",
-      startTime: "14:00:00",
-      endTime: "15:00:00",
-    },
-    {
-      day: "Friday",
-      startTime: "10:00:00",
-      endTime: "12:00:00",
-    },
-  ],
-  links: [
-    {
-      name: "Canvas",
-      url: "canvas.com",
-    },
-    {
-      name: "Piazza",
-      url: "piazza.com",
-    },
-  ],
-  additionalSections: [
-    {
-      type: "Lab",
-      section: "L2C",
-      times: [
-        {
-          day: "Tuesday",
-          startTime: "13:00:00",
-          endTime: "15:00:00",
-        },
-      ],
-    },
-    {
-      type: "Tutorial",
-      section: "T2A",
-      times: [
-        {
-          day: "Thursday",
-          startTime: "09:00:00",
-          endTime: "12:00:00",
-        },
-      ],
-    },
-  ],
-};
-
 async function getAuthenticatedCalendar(userID) {
   const oAuth2Client = new OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -86,18 +24,25 @@ async function getAuthenticatedCalendar(userID) {
     "SELECT refresh_token FROM google_api_info WHERE user_id = $1",
     [userID]
   );
-  oAuth2Client.setCredentials({ refresh_token: res.rows[0].refresh_token });
+  const { refreshToken } = convertKeysToCamelCase(res.rows[0]);
+  if (!refreshToken) {
+    return;
+  }
+  oAuth2Client.setCredentials({ refresh_token: refreshToken });
   return google.calendar({ version: "v3", auth: oAuth2Client });
 }
 
 async function createCalendar(userID) {
   try {
     const calendar = await getAuthenticatedCalendar(userID);
+    if (!calendar) {
+      return;
+    }
     let res = await calendar.settings.get({ setting: "timezone" });
     const timeZone = res.data.value;
     res = await calendar.calendars.insert({
       requestBody: {
-        summary: "School Scheduler",
+        summary: "Courses",
         timeZone,
       },
     });
@@ -111,10 +56,11 @@ async function createCalendar(userID) {
   }
 }
 
-async function addCourse(userID, course) {
+async function addCourse(course) {
   try {
-    const { name, startDate, endDate, times, additionalSections } = course;
-    const res = await pool.query(
+    const { userID, name, startDate, endDate, times, additionalSections } =
+      course;
+    let res = await pool.query(
       "SELECT calendar_id, time_zone FROM google_api_info WHERE user_id = $1",
       [userID]
     );
@@ -123,15 +69,14 @@ async function addCourse(userID, course) {
       return;
     }
     const calendar = await getAuthenticatedCalendar(userID);
-    const startDateParsed = parseISO(startDate);
-    const startDateDay = format(startDateParsed, "EEEE");
+    const startDateDay = format(startDate, "EEEE");
     if (times) {
       for (const day of times) {
         const newStartDate =
           startDateDay === day.day
-            ? startDate
+            ? format(startDate, "yyyy-MM-dd")
             : format(
-                nextDay(startDateParsed, daysOfWeek.indexOf(day.day)),
+                nextDay(startDate, daysOfWeek.indexOf(day.day)),
                 "yyyy-MM-dd"
               );
         const event = {
@@ -147,13 +92,17 @@ async function addCourse(userID, course) {
           recurrence: [
             `RRULE:FREQ=WEEKLY;\
             BYDAY=${day.day.substring(0, 2)};\
-            UNTIL=${endDate.replaceAll("-", "")}T235959Z`.replace(/ /g, ""),
+            UNTIL=${format(endDate, "yyyyMMdd")}T235959Z`.replace(/ /g, ""),
           ],
         };
-        await calendar.events.insert({
+        res = await calendar.events.insert({
           calendarId: calendarID,
           requestBody: event,
         });
+        await pool.query(
+          "UPDATE course_times SET google_calendar_event_id = $1 WHERE id = $2",
+          [res.data.id, day.id]
+        );
       }
     }
     if (additionalSections) {
@@ -162,9 +111,9 @@ async function addCourse(userID, course) {
           for (const day of additionalSection.times) {
             const newStartDate =
               startDateDay === day.day
-                ? startDate
+                ? format(startDate, "yyyy-MM-dd")
                 : format(
-                    nextDay(startDateParsed, daysOfWeek.indexOf(day.day)),
+                    nextDay(startDate, daysOfWeek.indexOf(day.day)),
                     "yyyy-MM-dd"
                   );
             const event = {
@@ -180,12 +129,58 @@ async function addCourse(userID, course) {
               recurrence: [
                 `RRULE:FREQ=WEEKLY;\
                 BYDAY=${day.day.substring(0, 2)};\
-                UNTIL=${endDate.replaceAll("-", "")}T235959Z`.replace(/ /g, ""),
+                UNTIL=${format(endDate, "yyyyMMdd")}T235959Z`.replace(/ /g, ""),
               ],
             };
-            await calendar.events.insert({
+            res = await calendar.events.insert({
               calendarId: calendarID,
               requestBody: event,
+            });
+            await pool.query(
+              "UPDATE additional_section_times SET google_calendar_event_id = $1 WHERE id = $2",
+              [res.data.id, day.id]
+            );
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function updateCourse(oldCourse, newCourse) {
+  await removeCourse(oldCourse);
+  await addCourse(newCourse);
+}
+
+async function removeCourse(course) {
+  try {
+    const { userID, times, additionalSections } = course;
+    let res = await pool.query(
+      "SELECT calendar_id FROM google_api_info WHERE user_id = $1",
+      [userID]
+    );
+    const { calendarID } = convertKeysToCamelCase(res.rows[0]);
+    if (!calendarID) {
+      return;
+    }
+    const calendar = await getAuthenticatedCalendar(userID);
+    if (times) {
+      for (const day of times) {
+        await calendar.events.delete({
+          calendarId: calendarID,
+          eventId: day.googleCalendarEventID,
+        });
+      }
+    }
+    if (additionalSections) {
+      for (const additionalSection of additionalSections) {
+        if (additionalSection.times) {
+          for (const day of additionalSection.times) {
+            await calendar.events.delete({
+              calendarId: calendarID,
+              eventId: day.googleCalendarEventID,
             });
           }
         }
@@ -196,4 +191,9 @@ async function addCourse(userID, course) {
   }
 }
 
-addCourse(1, exampleCourse);
+module.exports = {
+  createCalendar,
+  addCourse,
+  updateCourse,
+  removeCourse,
+};

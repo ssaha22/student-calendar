@@ -83,22 +83,19 @@ async function findCourse(id) {
   if (!course) {
     return;
   }
-  res = await pool.query(
-    `SELECT day, start_time, end_time FROM course_times WHERE course_id = $1`,
-    [id]
-  );
-  course.times = res.rows;
-  res = await pool.query(`SELECT name, url FROM links WHERE course_id = $1`, [
+  res = await pool.query("SELECT * FROM course_times WHERE course_id = $1", [
     id,
   ]);
+  course.times = res.rows;
+  res = await pool.query("SELECT * FROM links WHERE course_id = $1", [id]);
   course.links = res.rows;
   res = await pool.query(
-    `SELECT id, type, section FROM additional_sections WHERE course_id = $1`,
+    "SELECT * FROM additional_sections WHERE course_id = $1",
     [id]
   );
   for (const section of res.rows) {
     const { rows } = await pool.query(
-      `SELECT day, start_time, end_time FROM additional_section_times WHERE section_id = $1`,
+      "SELECT * FROM additional_section_times WHERE section_id = $1",
       [section.id]
     );
     section.times = rows;

@@ -20,6 +20,7 @@ CREATE TABLE course_times (
     day TEXT NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
+    google_calendar_event_id TEXT,
     FOREIGN KEY (course_id) REFERENCES courses ON DELETE CASCADE
 );
 
@@ -45,6 +46,7 @@ CREATE TABLE additional_section_times (
     day TEXT NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
+    google_calendar_event_id TEXT,
     FOREIGN KEY (section_id) REFERENCES additional_sections ON DELETE CASCADE
 );
 
