@@ -58,7 +58,7 @@ CREATE TABLE assignments (
     due_date DATE NOT NULL,
     due_time TIME, 
     is_completed BOOLEAN NOT NULL DEFAULT FALSE,
-    google_tasks_task_id TEXT,
+    google_calendar_event_id TEXT,
     FOREIGN KEY (course_id) REFERENCES courses ON DELETE CASCADE
 );
 
@@ -79,8 +79,8 @@ CREATE TABLE google_api_info (
     user_id INTEGER NOT NULL,
     refresh_token TEXT NOT NULL,
     courses_calendar_id TEXT,
+    assignments_calendar_id TEXT,
     exams_calendar_id TEXT,
-    assignments_task_list_id TEXT,
     time_zone TEXT,
     FOREIGN KEY (user_id) REFERENCES users ON DELETE CASCADE
 );

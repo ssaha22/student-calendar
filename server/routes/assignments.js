@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const db = require("../db");
+const calendar = require("../calendar");
 const assignmentSchema = require("../schemas/assignment");
 const {
   validateRequestBody,
@@ -21,7 +22,8 @@ router.post(
   async (req, res) => {
     try {
       const assignment = await db.createAssignment(req.body);
-      return res.status(201).json(assignment);
+      res.status(201).json(assignment);
+      return await calendar.addAssignment(assignment);
     } catch (err) {
       console.error(err);
       return res.sendStatus(500);
@@ -44,10 +46,12 @@ router.put(
     try {
       if (!req.assignment) {
         assignment = await db.createAssignment(req.body, id);
-        return res.status(201).json(assignment);
+        res.status(201).json(assignment);
+        return await calendar.addAssignment(assignment);
       }
       assignment = await db.updateAssignment(id, req.body);
-      return res.status(200).json(assignment);
+      res.status(200).json(assignment);
+      return await calendar.updateAssignment(assignment);
     } catch (err) {
       console.error(err);
       return res.sendStatus(500);
@@ -58,7 +62,8 @@ router.put(
 router.delete("/:id", verifyAssignmentUser, async (req, res) => {
   try {
     await db.deleteAssignment(req.params.id);
-    return res.sendStatus(204);
+    res.sendStatus(204);
+    await calendar.removeAssignment(req.assignment);
   } catch (err) {
     console.error(err);
     return res.sendStatus(500);
