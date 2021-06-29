@@ -2,6 +2,7 @@ const { google } = require("googleapis");
 const { OAuth2 } = google.auth;
 const { nextDay, format } = require("date-fns");
 const convertKeysToCamelCase = require("../utils/convertKeysToCamelCase");
+const db = require("../db");
 const { Pool } = require("pg");
 const pool = new Pool();
 
@@ -14,6 +15,13 @@ const daysOfWeek = [
   "Friday",
   "Saturday",
 ];
+
+async function saveRefreshToken(userID, refreshToken) {
+  await pool.query(
+    "INSERT INTO google_api_info (refresh_token) VALUES ($1) WHERE user_id = $2",
+    [refreshToken, userID]
+  );
+}
 
 async function getAuthenticatedCalendar(userID) {
   try {
@@ -488,7 +496,35 @@ async function removeExam(exam) {
   }
 }
 
+async function addAll(userID) {
+  try {
+    const courses = await db.findCoursesForUser(userID);
+    if (!courses) {
+      return;
+    }
+    for (const course of courses) {
+      await addCourse(course);
+    }
+    const assignments = await db.findAssignmentsForUser(userID);
+    if (assignments) {
+      for (const assignment of assignments) {
+        await addAssignment(assignment);
+      }
+    }
+    const exams = await db.findExamsForUser(userID);
+    if (!exams) {
+      return;
+    }
+    for (const exam of exams) {
+      await addExam(exam);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 module.exports = {
+  saveRefreshToken,
   createCalendars,
   addCourse,
   updateCourse,
@@ -499,4 +535,5 @@ module.exports = {
   addExam,
   updateExam,
   removeExam,
+  addAll,
 };

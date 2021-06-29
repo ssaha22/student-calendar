@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const bcrypt = require("bcrypt");
 const db = require("../db");
+const calendar = require("../calendar");
 const userSchema = require("../schemas/user");
 const {
   validateRequestBody,
@@ -76,6 +77,25 @@ router.get("/:id/exams", async (req, res) => {
     const exams = await db.findExamsForUser(req.params.id);
     return res.status(200).json({ exams });
   } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+router.post("/:id/calendar", async (req, res) => {
+  try {
+    const userID = req.params.id;
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res
+        .status(400)
+        .json({ message: "Request body must include valid refresh token" });
+    }
+    await calendar.saveRefreshToken(userID, refreshToken);
+    res.sendStatus(204);
+    await calendar.createCalendars(userID);
+    return await calendar.addAll(userID);
+  } catch {
     console.error(err);
     return res.sendStatus(500);
   }
