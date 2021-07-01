@@ -44,9 +44,11 @@ router.put("/:id", validateRequestBody(userSchema), async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    await calendar.deleteCalendars(userID);
+    const userID = req.params.id;
+    const googleAPIInfo = await calendar.getGoogleAPIInfo(userID);
     await db.deleteUser(req.params.id);
-    return res.sendStatus(204);
+    res.sendStatus(204);
+    return await calendar.deleteCalendars(googleAPIInfo);
   } catch (err) {
     console.error(err);
     return res.sendStatus(500);
@@ -92,9 +94,15 @@ router.post("/:id/calendar", async (req, res) => {
         .status(400)
         .json({ message: "Request body must include valid refresh token" });
     }
+    const googleAPIInfo = await calendar.getGoogleAPIInfo(userID);
+    if (googleAPIInfo) {
+      return res.status(400).json({
+        message: "Google Calendar information for user already exists",
+      });
+    }
     await calendar.saveRefreshToken(userID, refreshToken);
-    await calendar.createCalendars(userID);
     res.sendStatus(204);
+    await calendar.createCalendars(userID);
     return await calendar.addAll(userID);
   } catch (err) {
     console.error(err);
@@ -105,9 +113,10 @@ router.post("/:id/calendar", async (req, res) => {
 router.delete("/:id/calendar", async (req, res) => {
   try {
     const userID = req.params.id;
-    await calendar.deleteCalendars(userID);
+    const googleAPIInfo = await calendar.getGoogleAPIInfo(userID);
     await calendar.deleteGoogleAPIInfo(userID);
-    return res.sendStatus(204);
+    res.sendStatus(204);
+    return await calendar.deleteCalendars(googleAPIInfo);
   } catch (err) {
     console.error(err);
     return res.sendStatus(500);

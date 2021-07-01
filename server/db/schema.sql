@@ -76,7 +76,7 @@ CREATE TABLE exams (
 
 CREATE TABLE google_api_info (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL UNIQUE,
     refresh_token TEXT NOT NULL,
     courses_calendar_id TEXT,
     assignments_calendar_id TEXT,
