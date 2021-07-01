@@ -18,8 +18,8 @@ const daysOfWeek = [
 
 async function saveRefreshToken(userID, refreshToken) {
   await pool.query(
-    "INSERT INTO google_api_info (refresh_token) VALUES ($1) WHERE user_id = $2",
-    [refreshToken, userID]
+    "INSERT INTO google_api_info (user_id, refresh_token) VALUES ($1, $2)",
+    [userID, refreshToken]
   );
 }
 
@@ -36,10 +36,10 @@ async function getAuthenticatedCalendar(userID) {
     "SELECT refresh_token FROM google_api_info WHERE user_id = $1",
     [userID]
   );
-  const { refreshToken } = convertKeysToCamelCase(res.rows[0]);
-  if (!refreshToken) {
+  if (!res.rows[0]) {
     return;
   }
+  const { refreshToken } = convertKeysToCamelCase(res.rows[0]);
   oAuth2Client.setCredentials({ refresh_token: refreshToken });
   return google.calendar({ version: "v3", auth: oAuth2Client });
 }
@@ -108,17 +108,15 @@ async function addCourse(course, calendar = null) {
   try {
     const { userID, name, startDate, endDate, times, additionalSections } =
       course;
+    calendar = calendar || (await getAuthenticatedCalendar(userID));
+    if (!calendar) {
+      return;
+    }
     let res = await pool.query(
       "SELECT courses_calendar_id, time_zone FROM google_api_info WHERE user_id = $1",
       [userID]
     );
     const { coursesCalendarID, timeZone } = convertKeysToCamelCase(res.rows[0]);
-    if (!calendar) {
-      calendar = await getAuthenticatedCalendar(userID);
-    }
-    if (!calendar || !coursesCalendarID) {
-      return;
-    }
     const startDateDay = format(startDate, "EEEE");
     if (times) {
       for (const day of times) {
@@ -155,43 +153,45 @@ async function addCourse(course, calendar = null) {
         );
       }
     }
-    if (additionalSections) {
-      for (const additionalSection of additionalSections) {
-        if (additionalSection.times) {
-          for (const day of additionalSection.times) {
-            const newStartDate =
-              startDateDay === day.day
-                ? format(startDate, "yyyy-MM-dd")
-                : format(
-                    nextDay(startDate, daysOfWeek.indexOf(day.day)),
-                    "yyyy-MM-dd"
-                  );
-            const event = {
-              summary: `${name} ${additionalSection.type} ${additionalSection.section}`,
-              start: {
-                dateTime: `${newStartDate}T${day.startTime}`,
-                timeZone,
-              },
-              end: {
-                dateTime: `${newStartDate}T${day.endTime}`,
-                timeZone,
-              },
-              recurrence: [
-                `RRULE:FREQ=WEEKLY;\
+    if (!additionalSections) {
+      return;
+    }
+    for (const additionalSection of additionalSections) {
+      if (!additionalSection.times) {
+        continue;
+      }
+      for (const day of additionalSection.times) {
+        const newStartDate =
+          startDateDay === day.day
+            ? format(startDate, "yyyy-MM-dd")
+            : format(
+                nextDay(startDate, daysOfWeek.indexOf(day.day)),
+                "yyyy-MM-dd"
+              );
+        const event = {
+          summary: `${name} ${additionalSection.type} ${additionalSection.section}`,
+          start: {
+            dateTime: `${newStartDate}T${day.startTime}`,
+            timeZone,
+          },
+          end: {
+            dateTime: `${newStartDate}T${day.endTime}`,
+            timeZone,
+          },
+          recurrence: [
+            `RRULE:FREQ=WEEKLY;\
                 BYDAY=${day.day.substring(0, 2)};\
                 UNTIL=${format(endDate, "yyyyMMdd")}T235959Z`.replace(/ /g, ""),
-              ],
-            };
-            res = await calendar.events.insert({
-              calendarId: coursesCalendarID,
-              requestBody: event,
-            });
-            await pool.query(
-              "UPDATE additional_section_times SET google_calendar_event_id = $1 WHERE id = $2",
-              [res.data.id, day.id]
-            );
-          }
-        }
+          ],
+        };
+        res = await calendar.events.insert({
+          calendarId: coursesCalendarID,
+          requestBody: event,
+        });
+        await pool.query(
+          "UPDATE additional_section_times SET google_calendar_event_id = $1 WHERE id = $2",
+          [res.data.id, day.id]
+        );
       }
     }
   } catch (err) {
@@ -200,22 +200,64 @@ async function addCourse(course, calendar = null) {
 }
 
 async function updateCourse(oldCourse, newCourse) {
-  await removeCourse(oldCourse);
-  await addCourse(newCourse);
+  try {
+    const userID = newCourse.userID;
+    const calendar = await getAuthenticatedCalendar(userID);
+    if (!calendar) {
+      return;
+    }
+    await removeCourse(oldCourse, calendar);
+    await addCourse(newCourse, calendar);
+    if (newCourse.name !== oldCourse.name) {
+      const courseID = newCourse.id;
+      const assignments = await db.findAssignmentsForCourse(courseID);
+      const res = await pool.query(
+        `SELECT assignments_calendar_id, exams_calendar_id 
+        FROM google_api_info 
+        WHERE user_id = $1`,
+        [userID]
+      );
+      const { assignmentsCalendarID, examsCalendarID } = convertKeysToCamelCase(
+        res.rows[0]
+      );
+      if (assignments) {
+        for (const assignment of assignments) {
+          calendar.events.patch({
+            calendarId: assignmentsCalendarID,
+            eventId: assignment.googleCalendarEventID,
+            requestBody: { summary: `${newCourse.name} ${assignment.name}` },
+          });
+        }
+      }
+      const exams = await db.findExamsForCourse(courseID);
+      if (!exams) {
+        return;
+      }
+      for (const exam of exams) {
+        calendar.events.patch({
+          calendarId: examsCalendarID,
+          eventId: exam.googleCalendarEventID,
+          requestBody: { summary: `${newCourse.name} ${exam.name}` },
+        });
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
 }
 
-async function removeCourse(course) {
+async function removeCourse(course, calendar = null) {
   try {
     const { userID, times, additionalSections } = course;
-    let res = await pool.query(
+    calendar = calendar || (await getAuthenticatedCalendar(userID));
+    if (!calendar) {
+      return;
+    }
+    const res = await pool.query(
       "SELECT courses_calendar_id FROM google_api_info WHERE user_id = $1",
       [userID]
     );
     const { coursesCalendarID } = convertKeysToCamelCase(res.rows[0]);
-    const calendar = await getAuthenticatedCalendar(userID);
-    if (!calendar || !coursesCalendarID) {
-      return;
-    }
     if (times) {
       for (const day of times) {
         const { googleCalendarEventID } = day;
@@ -228,20 +270,22 @@ async function removeCourse(course) {
         });
       }
     }
-    if (additionalSections) {
-      for (const additionalSection of additionalSections) {
-        if (additionalSection.times) {
-          for (const day of additionalSection.times) {
-            const { googleCalendarEventID } = day;
-            if (!googleCalendarEventID) {
-              continue;
-            }
-            await calendar.events.delete({
-              calendarId: coursesCalendarID,
-              eventId: googleCalendarEventID,
-            });
-          }
+    if (!additionalSections) {
+      return;
+    }
+    for (const additionalSection of additionalSections) {
+      if (!additionalSection.times) {
+        continue;
+      }
+      for (const day of additionalSection.times) {
+        const { googleCalendarEventID } = day;
+        if (!googleCalendarEventID) {
+          continue;
         }
+        await calendar.events.delete({
+          calendarId: coursesCalendarID,
+          eventId: googleCalendarEventID,
+        });
       }
     }
   } catch (err) {
@@ -252,6 +296,10 @@ async function removeCourse(course) {
 async function addAssignment(assignment, calendar = null) {
   try {
     const { id, userID, courseName, name, dueDate, dueTime } = assignment;
+    calendar = calendar || (await getAuthenticatedCalendar(userID));
+    if (!calendar) {
+      return;
+    }
     let res = await pool.query(
       "SELECT assignments_calendar_id, time_zone FROM google_api_info WHERE user_id = $1",
       [userID]
@@ -259,12 +307,6 @@ async function addAssignment(assignment, calendar = null) {
     const { assignmentsCalendarID, timeZone } = convertKeysToCamelCase(
       res.rows[0]
     );
-    if (!calendar) {
-      calendar = await getAuthenticatedCalendar(userID);
-    }
-    if (!calendar || !assignmentsCalendarID) {
-      return;
-    }
     let event;
     if (dueTime) {
       event = {
@@ -315,17 +357,17 @@ async function updateAssignment(assignment) {
     if (!googleCalendarEventID) {
       return;
     }
-    let res = await pool.query(
+    const calendar = await getAuthenticatedCalendar(userID);
+    if (!calendar) {
+      return;
+    }
+    const res = await pool.query(
       "SELECT assignments_calendar_id, time_zone FROM google_api_info WHERE user_id = $1",
       [userID]
     );
     const { assignmentsCalendarID, timeZone } = convertKeysToCamelCase(
       res.rows[0]
     );
-    const calendar = await getAuthenticatedCalendar(userID);
-    if (!calendar || !assignmentsCalendarID) {
-      return;
-    }
     let event;
     if (dueTime) {
       event = {
@@ -366,15 +408,15 @@ async function removeAssignment(assignment) {
     if (!googleCalendarEventID) {
       return;
     }
-    let res = await pool.query(
+    const calendar = await getAuthenticatedCalendar(userID);
+    if (!calendar) {
+      return;
+    }
+    const res = await pool.query(
       "SELECT assignments_calendar_id FROM google_api_info WHERE user_id = $1",
       [userID]
     );
     const { assignmentsCalendarID } = convertKeysToCamelCase(res.rows[0]);
-    const calendar = await getAuthenticatedCalendar(userID);
-    if (!calendar || !assignmentsCalendarID) {
-      return;
-    }
     await calendar.events.delete({
       calendarId: assignmentsCalendarID,
       eventId: googleCalendarEventID,
@@ -387,17 +429,15 @@ async function removeAssignment(assignment) {
 async function addExam(exam, calendar = null) {
   try {
     const { id, userID, courseName, name, date, startTime, endTime } = exam;
+    calendar = calendar || (await getAuthenticatedCalendar(userID));
+    if (!calendar) {
+      return;
+    }
     let res = await pool.query(
       "SELECT exams_calendar_id, time_zone FROM google_api_info WHERE user_id = $1",
       [userID]
     );
     const { examsCalendarID, timeZone } = convertKeysToCamelCase(res.rows[0]);
-    if (!calendar) {
-      calendar = await getAuthenticatedCalendar(userID);
-    }
-    if (!calendar || !examsCalendarID) {
-      return;
-    }
     let event;
     if (startTime && endTime) {
       event = {
@@ -449,15 +489,15 @@ async function updateExam(exam) {
     if (!googleCalendarEventID) {
       return;
     }
-    let res = await pool.query(
+    const calendar = await getAuthenticatedCalendar(userID);
+    if (!calendar) {
+      return;
+    }
+    const res = await pool.query(
       "SELECT exams_calendar_id, time_zone FROM google_api_info WHERE user_id = $1",
       [userID]
     );
     const { examsCalendarID, timeZone } = convertKeysToCamelCase(res.rows[0]);
-    const calendar = await getAuthenticatedCalendar(userID);
-    if (!calendar || !examsCalendarID) {
-      return;
-    }
     let event;
     if (startTime && endTime) {
       event = {
@@ -498,15 +538,15 @@ async function removeExam(exam) {
     if (!googleCalendarEventID) {
       return;
     }
-    let res = await pool.query(
+    const calendar = await getAuthenticatedCalendar(userID);
+    if (!calendar) {
+      return;
+    }
+    const res = await pool.query(
       "SELECT exams_calendar_id FROM google_api_info WHERE user_id = $1",
       [userID]
     );
     const { examsCalendarID } = convertKeysToCamelCase(res.rows[0]);
-    const calendar = await getAuthenticatedCalendar(userID);
-    if (!calendar || !examsCalendarID) {
-      return;
-    }
     await calendar.events.delete({
       calendarId: examsCalendarID,
       eventId: googleCalendarEventID,
@@ -518,11 +558,14 @@ async function removeExam(exam) {
 
 async function addAll(userID) {
   try {
+    const calendar = await getAuthenticatedCalendar(userID);
+    if (!calendar) {
+      return;
+    }
     const courses = await db.findCoursesForUser(userID);
     if (!courses) {
       return;
     }
-    const calendar = await getAuthenticatedCalendar(userID);
     for (const course of courses) {
       await addCourse(course, calendar);
     }

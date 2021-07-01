@@ -96,7 +96,7 @@ router.post("/:id/calendar", async (req, res) => {
     await calendar.createCalendars(userID);
     res.sendStatus(204);
     return await calendar.addAll(userID);
-  } catch {
+  } catch (err) {
     console.error(err);
     return res.sendStatus(500);
   }
@@ -108,7 +108,7 @@ router.delete("/:id/calendar", async (req, res) => {
     await calendar.deleteCalendars(userID);
     await calendar.deleteGoogleAPIInfo(userID);
     return res.sendStatus(204);
-  } catch {
+  } catch (err) {
     console.error(err);
     return res.sendStatus(500);
   }
