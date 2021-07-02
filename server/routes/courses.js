@@ -61,9 +61,12 @@ router.put(
 
 router.delete("/:id", verifyCourseUser, async (req, res) => {
   try {
-    await db.deleteCourse(req.params.id);
+    const courseID = req.params.id;
+    const assignments = await db.findAssignmentsForCourse(courseID);
+    const exams = await db.findExamsForCourse(courseID);
+    await db.deleteCourse(courseID);
     res.sendStatus(204);
-    return await calendar.removeCourse(req.course);
+    return await calendar.removeCourse(req.course, assignments, exams);
   } catch (err) {
     console.error(err);
     return res.sendStatus(500);

@@ -112,7 +112,7 @@ async function deleteCalendars(googleAPIInfo) {
   }
 }
 
-async function addCourse(course, calendar = null) {
+async function addCourse(course, calendar) {
   try {
     const { userID, name, startDate, endDate, times, additionalSections } =
       course;
@@ -206,7 +206,7 @@ async function updateCourse(oldCourse, newCourse) {
     const { refreshToken, assignmentsCalendarID, examsCalendarID } =
       googleAPIInfo;
     const calendar = await getAuthenticatedCalendar(refreshToken);
-    await removeCourse(oldCourse, calendar);
+    await removeCourse(oldCourse, [], [], calendar);
     await addCourse(newCourse, calendar);
     if (newCourse.name !== oldCourse.name) {
       const courseID = newCourse.id;
@@ -232,7 +232,7 @@ async function updateCourse(oldCourse, newCourse) {
   }
 }
 
-async function removeCourse(course, calendar = null) {
+async function removeCourse(course, assignments, exams, calendar) {
   try {
     const { userID, times, additionalSections } = course;
     const googleAPIInfo = await getGoogleAPIInfo(userID);
@@ -266,12 +266,18 @@ async function removeCourse(course, calendar = null) {
         });
       }
     }
+    for (const assignment of assignments) {
+      await removeAssignment(assignment, calendar);
+    }
+    for (const exam of exams) {
+      await removeExam(exam, calendar);
+    }
   } catch (err) {
     console.error(err);
   }
 }
 
-async function addAssignment(assignment, calendar = null) {
+async function addAssignment(assignment, calendar) {
   try {
     const { id, userID, courseName, name, dueDate, dueTime } = assignment;
     const googleAPIInfo = await getGoogleAPIInfo(userID);
@@ -370,7 +376,7 @@ async function updateAssignment(assignment) {
   }
 }
 
-async function removeAssignment(assignment) {
+async function removeAssignment(assignment, calendar) {
   try {
     const { userID, googleCalendarEventID } = assignment;
     if (!googleCalendarEventID) {
@@ -381,7 +387,7 @@ async function removeAssignment(assignment) {
       return;
     }
     const { refreshToken, assignmentsCalendarID } = googleAPIInfo;
-    const calendar = await getAuthenticatedCalendar(refreshToken);
+    calendar = calendar || (await getAuthenticatedCalendar(refreshToken));
     await calendar.events.delete({
       calendarId: assignmentsCalendarID,
       eventId: googleCalendarEventID,
@@ -391,7 +397,7 @@ async function removeAssignment(assignment) {
   }
 }
 
-async function addExam(exam, calendar = null) {
+async function addExam(exam, calendar) {
   try {
     const { id, userID, courseName, name, date, startTime, endTime } = exam;
     const googleAPIInfo = await getGoogleAPIInfo(userID);
@@ -491,7 +497,7 @@ async function updateExam(exam) {
   }
 }
 
-async function removeExam(exam) {
+async function removeExam(exam, calendar) {
   try {
     const { userID, googleCalendarEventID } = exam;
     if (!googleCalendarEventID) {
@@ -502,7 +508,7 @@ async function removeExam(exam) {
       return;
     }
     const { refreshToken, examsCalendarID } = googleAPIInfo;
-    const calendar = await getAuthenticatedCalendar(refreshToken);
+    calendar = calendar || (await getAuthenticatedCalendar(refreshToken));
     await calendar.events.delete({
       calendarId: examsCalendarID,
       eventId: googleCalendarEventID,
