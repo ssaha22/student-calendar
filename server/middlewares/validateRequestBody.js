@@ -19,7 +19,11 @@ function validateRequestBody(schema) {
       req.body = body;
       return next();
     } catch (err) {
-      return res.status(400).json({ message: err.message });
+      return res
+        .status(400)
+        .json({
+          message: err.message[0].toUpperCase() + err.message.substring(1),
+        });
     }
   };
 }
