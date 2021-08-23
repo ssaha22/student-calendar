@@ -1,7 +1,10 @@
 import React from "react";
+import AppMenu from "./AppMenu";
+import { useParams } from "react-router";
 
 function CoursePage() {
-  return <div>Hello world</div>;
+  const { id } = useParams();
+  return <AppMenu selectedCourseID={parseInt(id)}></AppMenu>;
 }
 
 export default CoursePage;

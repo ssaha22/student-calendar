@@ -1,7 +1,8 @@
 import React from "react";
+import AppMenu from "./AppMenu";
 
 function SettingsPage() {
-  return <div>Hello world</div>;
+  return <AppMenu selected="Settings"></AppMenu>;
 }
 
 export default SettingsPage;

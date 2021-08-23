@@ -5,6 +5,7 @@ import SignupPage from "./components/SignupPage";
 import LoginPage from "./components/LoginPage";
 import SchedulePage from "./components/SchedulePage";
 import CoursePage from "./components/CoursePage";
+import NewCoursePage from "./components/NewCoursePage";
 import SettingsPage from "./components/SettingsPage";
 
 function App() {
@@ -25,6 +26,9 @@ function App() {
         </Route>
         <Route exact path="/courses/:id">
           <CoursePage />
+        </Route>
+        <Route exact path="/new-course">
+          <NewCoursePage />
         </Route>
         <Route exact path="/settings">
           <SettingsPage />

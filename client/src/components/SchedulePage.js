@@ -1,7 +1,8 @@
 import React from "react";
+import AppMenu from "./AppMenu";
 
 function SchedulePage() {
-  return <div>Hello world</div>;
+  return <AppMenu selected="Schedule"></AppMenu>;
 }
 
 export default SchedulePage;
