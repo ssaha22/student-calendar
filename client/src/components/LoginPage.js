@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { login } from "../redux/userSlice";
+import { fetchCourses } from "../redux/coursesSlice";
 import { useHistory } from "react-router-dom";
 import {
   Avatar,
@@ -67,6 +68,7 @@ function LoginPage() {
       );
       dispatch(login(res.data));
       history.push("/schedule");
+      dispatch(fetchCourses(res.data));
     } catch (err) {
       if (
         err.response &&

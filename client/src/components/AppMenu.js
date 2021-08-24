@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/userSlice";
 import { useHistory, useLocation } from "react-router-dom";
+import clsx from "clsx";
 import {
   AppBar,
   Divider,
@@ -36,21 +36,28 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
   },
   drawer: {
-    [theme.breakpoints.up("sm")]: {
+    [theme.breakpoints.up("md")]: {
       width: drawerWidth,
       flexShrink: 0,
     },
   },
   appBar: {
-    [theme.breakpoints.up("sm")]: {
+    [theme.breakpoints.up("md")]: {
       width: `calc(100% - ${drawerWidth}px)`,
       marginLeft: drawerWidth,
     },
   },
-  title: { flexGrow: 1, textAlign: "center" },
+  title: {
+    flexGrow: 1,
+    textAlign: "center",
+    fontSize: "2rem",
+    [theme.breakpoints.down("xs")]: {
+      fontSize: "1.5rem",
+    },
+  },
   menuButton: {
     marginRight: theme.spacing(2),
-    [theme.breakpoints.up("sm")]: {
+    [theme.breakpoints.up("md")]: {
       display: "none",
     },
   },
@@ -83,8 +90,7 @@ function AppMenu({ selected, selectedCourseID }) {
   const history = useHistory();
   const location = useLocation();
   const dispatch = useDispatch();
-  const userInfo = useSelector((state) => state.user);
-  const [courses, setCourses] = useState([]);
+  const courses = useSelector((state) => state.courses);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [coursesOpen, setCoursesOpen] = useState(Boolean(selectedCourseID));
 
@@ -94,14 +100,6 @@ function AppMenu({ selected, selectedCourseID }) {
 
   function handleCoursesToggle() {
     setCoursesOpen(!coursesOpen);
-  }
-
-  async function fetchCourses() {
-    const res = await axios.get(
-      `${process.env.REACT_APP_API_URL}/users/${userInfo.userID}/courses`,
-      { headers: { Authorization: `Bearer ${userInfo.authToken}` } }
-    );
-    setCourses(res.data.courses);
   }
 
   function redirect(path) {
@@ -114,10 +112,6 @@ function AppMenu({ selected, selectedCourseID }) {
     dispatch(logout());
     history.push("/");
   }
-
-  useEffect(() => {
-    fetchCourses();
-  }, []);
 
   const drawer = (
     <div>
@@ -155,13 +149,11 @@ function AppMenu({ selected, selectedCourseID }) {
                 <ListItem
                   key={id}
                   button
-                  className={
-                    selectedCourseID === id
-                      ? classes.selected
-                      : classes.notSelected
-                  }
                   onClick={() => redirect(`/courses/${id}`)}
-                  className={classes.courses}
+                  className={clsx(classes.courses, {
+                    [classes.selected]: selectedCourseID === id,
+                    [classes.notSelected]: selectedCourseID !== id,
+                  })}
                 >
                   <ListItemText primary={name} />
                 </ListItem>
@@ -216,13 +208,13 @@ function AppMenu({ selected, selectedCourseID }) {
           >
             <Menu />
           </IconButton>
-          <Typography variant="h4" noWrap className={classes.title}>
+          <Typography noWrap className={classes.title}>
             Student Calendar
           </Typography>
         </Toolbar>
       </AppBar>
       <nav className={classes.drawer}>
-        <Hidden smUp implementation="css">
+        <Hidden mdUp implementation="css">
           <Drawer
             variant="temporary"
             anchor="left"
@@ -238,7 +230,7 @@ function AppMenu({ selected, selectedCourseID }) {
             {drawer}
           </Drawer>
         </Hidden>
-        <Hidden xsDown implementation="css">
+        <Hidden smDown implementation="css">
           <Drawer
             classes={{
               paper: classes.drawerPaper,
