@@ -2,7 +2,7 @@ import React from "react";
 import AppMenu from "./AppMenu";
 
 function NewCoursePage() {
-  return <AppMenu selected="New Course"></AppMenu>;
+  return <AppMenu showSideBar={true} selected="New Course" />;
 }
 
 export default NewCoursePage;

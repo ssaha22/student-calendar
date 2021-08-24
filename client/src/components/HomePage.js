@@ -1,7 +1,8 @@
 import React from "react";
+import AppMenu from "./AppMenu";
 
 function HomePage() {
-  return <div>Hello world</div>;
+  return <AppMenu showLoginAndSignup={true} />;
 }
 
 export default HomePage;

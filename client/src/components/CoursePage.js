@@ -4,7 +4,7 @@ import { useParams } from "react-router";
 
 function CoursePage() {
   const { id } = useParams();
-  return <AppMenu selectedCourseID={parseInt(id)}></AppMenu>;
+  return <AppMenu showSideBar={true} selectedCourseID={parseInt(id)} />;
 }
 
 export default CoursePage;

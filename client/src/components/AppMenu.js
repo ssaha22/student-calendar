@@ -16,8 +16,10 @@ import {
   Toolbar,
   Typography,
   Collapse,
+  Button,
+  useMediaQuery,
 } from "@material-ui/core";
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
 import {
   Class,
   Schedule,
@@ -43,16 +45,23 @@ const useStyles = makeStyles((theme) => ({
   },
   appBar: {
     [theme.breakpoints.up("md")]: {
-      width: `calc(100% - ${drawerWidth}px)`,
-      marginLeft: drawerWidth,
+      width: (props) =>
+        props.showSideBar ? `calc(100% - ${drawerWidth}px)` : "100%",
+      marginLeft: (props) => (props.showSideBar ? drawerWidth : 0),
     },
   },
   title: {
     flexGrow: 1,
     textAlign: "center",
     fontSize: "2rem",
+    [theme.breakpoints.down("sm")]: {
+      marginRight: (props) => (props.showSideBar ? theme.spacing(6) : 0),
+    },
     [theme.breakpoints.down("xs")]: {
       fontSize: "1.5rem",
+    },
+    [theme.breakpoints.down(400)]: {
+      fontSize: "1.2rem",
     },
   },
   menuButton: {
@@ -85,11 +94,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function AppMenu({ selected, selectedCourseID }) {
-  const classes = useStyles();
+function AppMenu(props) {
+  const { selected, selectedCourseID, showSideBar, showLoginAndSignup } = props;
+  const classes = useStyles(props);
   const history = useHistory();
   const location = useLocation();
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("xs"));
   const courses = useSelector((state) => state.courses);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [coursesOpen, setCoursesOpen] = useState(Boolean(selectedCourseID));
@@ -143,22 +155,23 @@ function AppMenu({ selected, selectedCourseID }) {
         </ListItem>
         <Collapse in={coursesOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            {courses.map((course) => {
-              const { id, name } = course;
-              return (
-                <ListItem
-                  key={id}
-                  button
-                  onClick={() => redirect(`/courses/${id}`)}
-                  className={clsx(classes.courses, {
-                    [classes.selected]: selectedCourseID === id,
-                    [classes.notSelected]: selectedCourseID !== id,
-                  })}
-                >
-                  <ListItemText primary={name} />
-                </ListItem>
-              );
-            })}
+            {Array.isArray(courses) &&
+              courses.map((course) => {
+                const { id, name } = course;
+                return (
+                  <ListItem
+                    key={id}
+                    button
+                    onClick={() => redirect(`/courses/${id}`)}
+                    className={clsx(classes.courses, {
+                      [classes.selected]: selectedCourseID === id,
+                      [classes.notSelected]: selectedCourseID !== id,
+                    })}
+                  >
+                    <ListItemText primary={name} />
+                  </ListItem>
+                );
+              })}
           </List>
         </Collapse>
         <ListItem
@@ -199,49 +212,71 @@ function AppMenu({ selected, selectedCourseID }) {
     <div className={classes.root}>
       <AppBar position="fixed" className={classes.appBar}>
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            className={classes.menuButton}
-          >
-            <Menu />
-          </IconButton>
+          {showSideBar && (
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              className={classes.menuButton}
+            >
+              <Menu />
+            </IconButton>
+          )}
           <Typography noWrap className={classes.title}>
             Student Calendar
           </Typography>
+          {showLoginAndSignup && (
+            <>
+              <Button
+                color="inherit"
+                size={isSmallScreen ? "small" : "large"}
+                onClick={() => redirect("/login")}
+              >
+                Log In
+              </Button>
+              <Button
+                color="inherit"
+                size={isSmallScreen ? "small" : "large"}
+                onClick={() => redirect("/signup")}
+              >
+                Sign Up
+              </Button>
+            </>
+          )}
         </Toolbar>
       </AppBar>
-      <nav className={classes.drawer}>
-        <Hidden mdUp implementation="css">
-          <Drawer
-            variant="temporary"
-            anchor="left"
-            open={mobileOpen}
-            onClose={handleDrawerToggle}
-            classes={{
-              paper: classes.drawerPaper,
-            }}
-            ModalProps={{
-              keepMounted: true,
-            }}
-          >
-            {drawer}
-          </Drawer>
-        </Hidden>
-        <Hidden smDown implementation="css">
-          <Drawer
-            classes={{
-              paper: classes.drawerPaper,
-            }}
-            variant="permanent"
-            open
-          >
-            {drawer}
-          </Drawer>
-        </Hidden>
-      </nav>
+      {showSideBar && (
+        <nav className={classes.drawer}>
+          <Hidden mdUp implementation="css">
+            <Drawer
+              variant="temporary"
+              anchor="left"
+              open={mobileOpen}
+              onClose={handleDrawerToggle}
+              classes={{
+                paper: classes.drawerPaper,
+              }}
+              ModalProps={{
+                keepMounted: true,
+              }}
+            >
+              {drawer}
+            </Drawer>
+          </Hidden>
+          <Hidden smDown implementation="css">
+            <Drawer
+              classes={{
+                paper: classes.drawerPaper,
+              }}
+              variant="permanent"
+              open
+            >
+              {drawer}
+            </Drawer>
+          </Hidden>
+        </nav>
+      )}
     </div>
   );
 }

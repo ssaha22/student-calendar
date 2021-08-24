@@ -2,7 +2,7 @@ import React from "react";
 import AppMenu from "./AppMenu";
 
 function SettingsPage() {
-  return <AppMenu selected="Settings"></AppMenu>;
+  return <AppMenu showSideBar={true} selected="Settings" />;
 }
 
 export default SettingsPage;
