@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { login } from "../redux/userSlice";
-import { useHistory } from "react-router-dom";
+import { useHistory, Redirect } from "react-router-dom";
 import {
   Avatar,
   Button,
@@ -46,6 +46,7 @@ function SignupPage() {
   const classes = useStyles();
   const dispatch = useDispatch();
   const history = useHistory();
+  const userInfo = useSelector((state) => state.user);
   const [user, setUser] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -77,9 +78,13 @@ function SignupPage() {
     }
   }
 
+  if (userInfo.userID && userInfo.authToken) {
+    return <Redirect to="/schedule" />;
+  }
+
   return (
     <>
-      <AppMenu showLoginAndSignup={true} />
+      <AppMenu showLoginAndSignup />
       <Container component="main" maxWidth="xs">
         <div className={classes.paper}>
           <Avatar className={classes.avatar}>

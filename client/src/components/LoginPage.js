@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { login } from "../redux/userSlice";
 import { fetchCourses } from "../redux/coursesSlice";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation, Redirect } from "react-router-dom";
 import {
   Avatar,
   Button,
@@ -47,6 +47,8 @@ function LoginPage() {
   const classes = useStyles();
   const dispatch = useDispatch();
   const history = useHistory();
+  const location = useLocation();
+  const userInfo = useSelector((state) => state.user);
   const [user, setUser] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -68,8 +70,8 @@ function LoginPage() {
         user
       );
       dispatch(login(res.data));
-      history.push("/schedule");
       dispatch(fetchCourses(res.data));
+      history.push(location.state.redirectedFrom || "/schedule");
     } catch (err) {
       if (
         err.response &&
@@ -82,9 +84,13 @@ function LoginPage() {
     }
   }
 
+  if (userInfo.userID && userInfo.authToken) {
+    return <Redirect to="/schedule" />;
+  }
+
   return (
     <>
-      <AppMenu showLoginAndSignup={true} />
+      <AppMenu showLoginAndSignup />
       <Container component="main" maxWidth="xs">
         <div className={classes.paper}>
           <Avatar className={classes.avatar}>

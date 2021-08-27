@@ -7,7 +7,7 @@ import { format, isAfter } from "date-fns";
 import { useSelector, useDispatch } from "react-redux";
 import { addCourse } from "../redux/coursesSlice";
 import axios from "axios";
-import { useHistory } from "react-router-dom";
+import { useHistory, Redirect } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -77,9 +77,17 @@ function NewCoursePage() {
     }
   }
 
+  if (!userInfo.userID || !userInfo.authToken) {
+    return (
+      <Redirect
+        to={{ pathname: "/login", state: { redirectedFrom: "/new-course" } }}
+      />
+    );
+  }
+
   return (
     <div className={classes.root}>
-      <AppMenu showSideBar={true} selected="New Course" />
+      <AppMenu showSideBar selected="New Course" />
       <Container component="main" maxWidth="sm" className={classes.content}>
         <div className={classes.paper}>
           <Typography component="h1" variant="h5">
