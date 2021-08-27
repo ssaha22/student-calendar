@@ -31,8 +31,15 @@ router.post(
   }
 );
 
-router.get("/:id", verifyCourseUser, (req, res) => {
-  return res.status(200).json(req.course);
+router.get("/:id", verifyCourseUser, async (req, res) => {
+  try {
+    const assignments = await db.findAssignmentsForCourse(req.params.id);
+    const exams = await db.findExamsForCourse(req.params.id);
+    return res.status(200).json({ ...req.course, assignments, exams });
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
 });
 
 router.put(
