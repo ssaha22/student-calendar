@@ -34,9 +34,6 @@ import {
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    display: "flex",
-  },
   drawer: {
     [theme.breakpoints.up("md")]: {
       width: drawerWidth,
@@ -73,10 +70,6 @@ const useStyles = makeStyles((theme) => ({
   toolbar: theme.mixins.toolbar,
   drawerPaper: {
     width: drawerWidth,
-  },
-  content: {
-    flexGrow: 1,
-    padding: theme.spacing(3),
   },
   courses: {
     paddingLeft: theme.spacing(6),
@@ -209,7 +202,7 @@ function AppMenu(props) {
   );
 
   return (
-    <div className={classes.root}>
+    <>
       <AppBar position="fixed" className={classes.appBar}>
         <Toolbar>
           {showSideBar && (
@@ -277,7 +270,7 @@ function AppMenu(props) {
           </Hidden>
         </nav>
       )}
-    </div>
+    </>
   );
 }
 

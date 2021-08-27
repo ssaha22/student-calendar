@@ -15,15 +15,19 @@ export const fetchCourses = createAsyncThunk(
 
 export const coursesSlice = createSlice({
   name: "courses",
-  initialState: {
-    courses: [],
+  initialState: [],
+  reducers: {
+    addCourse: (state, action) => {
+      state.push(action.payload);
+    },
   },
-  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchCourses.fulfilled, (_state, action) => action.payload)
       .addCase(logout, () => []);
   },
 });
+
+export const { addCourse } = coursesSlice.actions;
 
 export default coursesSlice.reducer;
