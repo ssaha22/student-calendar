@@ -57,8 +57,8 @@ function NewCoursePage() {
     if (isAfter(startDate, endDate)) {
       return setError("Start date can not be after end date");
     }
-    courseCopy.startDate = format(startDate, "yyyy-MM-dd");
-    courseCopy.endDate = format(endDate, "yyyy-MM-dd");
+    courseCopy.startDate = startDate ? format(startDate, "yyyy-MM-dd") : null;
+    courseCopy.endDate = endDate ? format(endDate, "yyyy-MM-dd") : null;
     courseCopy.userID = userInfo.userID;
     if (!section) {
       delete courseCopy.section;
@@ -72,7 +72,6 @@ function NewCoursePage() {
       dispatch(addCourse(res.data));
       history.push(`/courses/${res.data.id}`);
     } catch (err) {
-      console.log(err);
       setError("Error adding course");
     }
   }
