@@ -1,12 +1,12 @@
 import React from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import HomePage from "./components/HomePage";
-import SignupPage from "./components/SignupPage";
-import LoginPage from "./components/LoginPage";
-import SchedulePage from "./components/SchedulePage";
-import CoursePage from "./components/CoursePage";
-import NewCoursePage from "./components/NewCoursePage";
-import SettingsPage from "./components/SettingsPage";
+import HomePage from "./pages/HomePage";
+import SignupPage from "./pages/SignupPage";
+import LoginPage from "./pages/LoginPage";
+import SchedulePage from "./pages/SchedulePage";
+import CoursePage from "./pages/CoursePage";
+import NewCoursePage from "./pages/NewCoursePage";
+import SettingsPage from "./pages/SettingsPage";
 
 function App() {
   return (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import AppMenu from "./AppMenu";
+import AppMenu from "../components/AppMenu";
 import { useParams, Redirect, useHistory } from "react-router";
 import { useSelector } from "react-redux";
 import {
@@ -13,10 +13,10 @@ import axios from "axios";
 import { makeStyles } from "@material-ui/core/styles";
 import { Home, Add } from "@material-ui/icons";
 import { parseISO } from "date-fns";
-import Assignment from "./Assignment";
-import NewAssignmentDialog from "./NewAssignmentDialog";
-import Exam from "./Exam";
-import NewExamDialog from "./NewExamDialog";
+import Assignment from "../components/Assignment";
+import NewAssignmentDialog from "../components/NewAssignmentDialog";
+import Exam from "../components/Exam";
+import NewExamDialog from "../components/NewExamDialog";
 
 const useStyles = makeStyles((theme) => ({
   root: {

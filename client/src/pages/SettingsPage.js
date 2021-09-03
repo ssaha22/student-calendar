@@ -1,5 +1,5 @@
 import React from "react";
-import AppMenu from "./AppMenu";
+import AppMenu from "../components/AppMenu";
 import { useSelector } from "react-redux";
 import { Redirect } from "react-router-dom";
 

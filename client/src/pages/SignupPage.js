@@ -16,7 +16,7 @@ import {
 } from "@material-ui/core";
 import { LockOutlined, Visibility, VisibilityOff } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/core/styles";
-import AppMenu from "./AppMenu";
+import AppMenu from "../components/AppMenu";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
