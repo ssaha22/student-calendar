@@ -10,7 +10,7 @@ import {
 import { KeyboardDatePicker, KeyboardTimePicker } from "@material-ui/pickers";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -29,30 +29,21 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function formatExam(exam) {
-  return {
-    ...exam,
-    date: parseISO(exam.date),
-    startTime: exam.startTime
-      ? parseISO(
-          `${new Date().toISOString().substring(0, 10)}T${exam.startTime}`
-        )
-      : null,
-    endTime: exam.endTime
-      ? parseISO(`${new Date().toISOString().substring(0, 10)}T${exam.endTime}`)
-      : null,
-  };
-}
-
-function EditExamDialog({ initialExam, open, handleClose, editExam }) {
+function NewExamDialog({ courseID, open, handleClose, addExam }) {
   const classes = useStyles();
   const userInfo = useSelector((state) => state.user);
-  const [exam, setExam] = useState(formatExam(initialExam));
+  const initialExam = {
+    name: "",
+    date: null,
+    startTime: null,
+    endTime: null,
+  };
+  const [exam, setExam] = useState(initialExam);
   const [error, setError] = useState("");
 
-  function onClose(examState) {
+  function onClose() {
     handleClose();
-    setExam(formatExam(examState));
+    setExam(initialExam);
     setError("");
   }
 
@@ -61,35 +52,36 @@ function EditExamDialog({ initialExam, open, handleClose, editExam }) {
     setExam((prevExam) => ({ ...prevExam, [name]: value }));
   }
 
-  async function handleEditExam(e) {
+  async function handleAddExam(e) {
     e.preventDefault();
     const examCopy = Object.assign({}, exam);
     const { date, startTime, endTime } = examCopy;
     examCopy.date = format(date, "yyyy-MM-dd");
     examCopy.startTime = startTime ? format(startTime, "HH:mm") : null;
     examCopy.endTime = endTime ? format(endTime, "HH:mm") : null;
+    examCopy.courseID = courseID;
     try {
-      const res = await axios.put(
-        `${process.env.REACT_APP_API_URL}/exams/${exam.id}`,
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_URL}/exams`,
         examCopy,
         { headers: { Authorization: `Bearer ${userInfo.authToken}` } }
       );
-      editExam(res.data);
-      onClose(res.data);
+      addExam(res.data);
+      onClose();
     } catch (err) {
-      setError("Error updating exam");
+      setError("Error adding exam");
     }
   }
 
   return (
-    <Dialog open={open} onClose={() => onClose(initialExam)}>
+    <Dialog open={open} onClose={onClose}>
       <DialogContent>
         <Typography component="h1" variant="h5" className={classes.title}>
-          Edit Exam
+          New Exam
         </Typography>
         <form
           className={classes.form}
-          onSubmit={handleEditExam}
+          onSubmit={handleAddExam}
           noValidate
           autoComplete="off"
         >
@@ -157,13 +149,13 @@ function EditExamDialog({ initialExam, open, handleClose, editExam }) {
             disabled={!exam.name || !exam.date}
             className={classes.button}
           >
-            Save Exam
+            Add Exam
           </Button>
           <Button
             variant="contained"
             color="primary"
             className={classes.button}
-            onClick={() => onClose(initialExam)}
+            onClick={onClose}
           >
             Cancel
           </Button>
@@ -173,4 +165,4 @@ function EditExamDialog({ initialExam, open, handleClose, editExam }) {
   );
 }
 
-export default EditExamDialog;
+export default NewExamDialog;
