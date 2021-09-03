@@ -55,7 +55,7 @@ function NewAssignmentDialog({ courseID, open, handleClose, addAssignment }) {
     e.preventDefault();
     const assignmentCopy = Object.assign({}, assignment);
     const { dueDate, dueTime } = assignmentCopy;
-    assignmentCopy.dueDate = dueDate ? format(dueDate, "yyyy-MM-dd") : null;
+    assignmentCopy.dueDate = format(dueDate, "yyyy-MM-dd");
     assignmentCopy.dueTime = dueTime ? format(dueTime, "HH:mm") : null;
     assignmentCopy.courseID = courseID;
     try {
@@ -67,7 +67,7 @@ function NewAssignmentDialog({ courseID, open, handleClose, addAssignment }) {
       addAssignment(res.data);
       onClose();
     } catch (err) {
-      setError("Error adding course");
+      setError("Error adding assignment");
     }
   }
 

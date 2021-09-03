@@ -33,9 +33,11 @@ function formatAssignment(assignment) {
   return {
     ...assignment,
     dueDate: parseISO(assignment.dueDate),
-    dueTime: parseISO(
-      `${new Date().toISOString().substring(0, 10)}T${assignment.dueTime}`
-    ),
+    dueTime: assignment.dueTime
+      ? parseISO(
+          `${new Date().toISOString().substring(0, 10)}T${assignment.dueTime}`
+        )
+      : null,
   };
 }
 
@@ -67,7 +69,7 @@ function EditAssignmentDialog({
     e.preventDefault();
     const assignmentCopy = Object.assign({}, assignment);
     const { dueDate, dueTime } = assignmentCopy;
-    assignmentCopy.dueDate = dueDate ? format(dueDate, "yyyy-MM-dd") : null;
+    assignmentCopy.dueDate = format(dueDate, "yyyy-MM-dd");
     assignmentCopy.dueTime = dueTime ? format(dueTime, "HH:mm") : null;
     try {
       const res = await axios.put(
@@ -78,7 +80,7 @@ function EditAssignmentDialog({
       editAssignment(res.data);
       onClose(res.data);
     } catch (err) {
-      setError("Error updating course");
+      setError("Error updating assignment");
     }
   }
 
