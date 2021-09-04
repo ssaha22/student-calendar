@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const db = require("../db");
 const calendar = require("../calendar");
 const userSchema = require("../schemas/user");
+const { dateSchema } = require("../schemas/custom");
 const {
   validateRequestBody,
   validateRequestID,
@@ -79,6 +80,28 @@ router.get("/:id/exams", async (req, res) => {
   try {
     const exams = await db.findExamsForUser(req.params.id);
     return res.status(200).json({ exams });
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+router.get("/:id/schedule", async (req, res) => {
+  try {
+    const date = req.query.date;
+    if (!date) {
+      return res
+        .status(400)
+        .json({ message: "Request must contain date query parameter" });
+    }
+    const { error } = dateSchema.validate(date);
+    if (error) {
+      return res
+        .status(400)
+        .json({ message: "Date query parameter must be in YYYY-MM-DD format" });
+    }
+    const schedule = await db.findScheduleOnDate(req.params.id, date);
+    return res.status(200).json(schedule);
   } catch (err) {
     console.error(err);
     return res.sendStatus(500);

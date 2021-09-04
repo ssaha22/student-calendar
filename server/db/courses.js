@@ -1,6 +1,7 @@
 const { Pool } = require("pg");
 const pool = new Pool();
 const convertKeysToCamelCase = require("../utils/convertKeysToCamelCase");
+const { format, parseISO } = require("date-fns");
 
 async function createCourse(course, id) {
   const {
@@ -147,16 +148,32 @@ async function deleteCourse(id) {
   await pool.query("DELETE FROM courses WHERE id = $1", [id]);
 }
 
-async function findCoursesForUser(userID) {
+async function findCoursesForUser(userID, date) {
+  let res;
   let courses = [];
-  const res = await pool.query("SELECT id FROM courses WHERE user_id = $1", [
-    userID,
-  ]);
+  if (date) {
+    const dayOfWeek = format(parseISO(date), "EEEE");
+    res = await pool.query(
+      `SELECT id 
+      FROM courses 
+      WHERE id IN (
+        SELECT course_id 
+        FROM course_times 
+        WHERE course_times.day = $2
+        ) 
+      AND user_id = $1`,
+      [userID, dayOfWeek]
+    );
+  } else {
+    res = await pool.query("SELECT id FROM courses WHERE user_id = $1", [
+      userID,
+    ]);
+  }
   for (const row of res.rows) {
     const course = await findCourse(row.id);
     courses.push(course);
   }
-  return convertKeysToCamelCase(courses);
+  return courses;
 }
 
 module.exports = {

@@ -74,21 +74,39 @@ async function findAssignmentsForCourse(courseID) {
   return convertKeysToCamelCase(rows);
 }
 
-async function findAssignmentsForUser(userID) {
-  const { rows } = await pool.query(
-    `SELECT assignments.*, courses.user_id, courses.name AS course_name 
-    FROM assignments
-    INNER JOIN courses
-    ON assignments.course_id = courses.id
-    WHERE assignments.course_id IN (
-      SELECT id
-      FROM courses
-      WHERE courses.user_id = $1
-      )
-    ORDER BY due_date, due_time`,
-    [userID]
-  );
-  return convertKeysToCamelCase(rows);
+async function findAssignmentsForUser(userID, date) {
+  let res;
+  if (date) {
+    res = await pool.query(
+      `SELECT assignments.*, courses.user_id, courses.name AS course_name 
+      FROM assignments
+      INNER JOIN courses
+      ON assignments.course_id = courses.id
+      WHERE assignments.course_id IN (
+        SELECT id
+        FROM courses
+        WHERE courses.user_id = $1
+        )
+      AND due_date = $2
+      ORDER BY due_date, due_time`,
+      [userID, date]
+    );
+  } else {
+    res = await pool.query(
+      `SELECT assignments.*, courses.user_id, courses.name AS course_name 
+      FROM assignments
+      INNER JOIN courses
+      ON assignments.course_id = courses.id
+      WHERE assignments.course_id IN (
+        SELECT id
+        FROM courses
+        WHERE courses.user_id = $1
+        )
+      ORDER BY due_date, due_time`,
+      [userID]
+    );
+  }
+  return convertKeysToCamelCase(res.rows);
 }
 
 module.exports = {
