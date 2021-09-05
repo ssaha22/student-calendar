@@ -77,8 +77,8 @@ function EditAssignmentDialog({
         assignmentCopy,
         { headers: { Authorization: `Bearer ${userInfo.authToken}` } }
       );
-      editAssignment(res.data);
       onClose(res.data);
+      editAssignment(res.data);
     } catch (err) {
       setError("Error updating assignment");
     }

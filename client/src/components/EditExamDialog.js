@@ -74,8 +74,8 @@ function EditExamDialog({ initialExam, open, handleClose, editExam }) {
         examCopy,
         { headers: { Authorization: `Bearer ${userInfo.authToken}` } }
       );
-      editExam(res.data);
       onClose(res.data);
+      editExam(res.data);
     } catch (err) {
       setError("Error updating exam");
     }

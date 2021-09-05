@@ -45,6 +45,9 @@ const useStyles = makeStyles((theme) => ({
   homeButton: {
     marginTop: theme.spacing(3),
   },
+  group: {
+    margin: theme.spacing(1),
+  },
 }));
 
 function CoursePage() {
@@ -83,23 +86,19 @@ function CoursePage() {
     setCourse({ ...course, assignments: newAssignments });
   }
 
-  async function completeAssignment(assignment) {
-    const updatedAssignment = {
-      ...assignment,
-      isCompleted: !assignment.isCompleted,
-    };
+  function completeAssignment(assignment) {
     const newAssignments = course.assignments.map((a) =>
-      a.id === assignment.id ? updatedAssignment : a
+      a.id === assignment.id
+        ? {
+            ...assignment,
+            isCompleted: !assignment.isCompleted,
+          }
+        : a
     );
     setCourse({ ...course, assignments: newAssignments });
-    await axios.put(
-      `${process.env.REACT_APP_API_URL}/assignments/${assignment.id}`,
-      updatedAssignment,
-      { headers: { Authorization: `Bearer ${userInfo.authToken}` } }
-    );
   }
 
-  async function editAssignment(assignment) {
+  function editAssignment(assignment) {
     const newAssignments = course.assignments.map((a) =>
       a.id === assignment.id ? assignment : a
     );
@@ -111,43 +110,36 @@ function CoursePage() {
     setCourse({ ...course, assignments: newAssignments });
   }
 
-  async function deleteAssignment(assignment) {
+  function deleteAssignment(assignment) {
     const newAssignments = course.assignments.filter(
       (a) => a.id !== assignment.id
     );
     setCourse({ ...course, assignments: newAssignments });
-    await axios.delete(
-      `${process.env.REACT_APP_API_URL}/assignments/${assignment.id}`,
-      { headers: { Authorization: `Bearer ${userInfo.authToken}` } }
-    );
   }
 
   function addExam(exam) {
     const newExams = [...course.exams, exam];
     newExams.sort(
       (a, b) =>
-        parseISO(`${a.date.substring(0, 10)}T${a.endTime || "23:59:59"}`) -
-        parseISO(`${b.date.substring(0, 10)}T${b.endTime || "23:59:59"}`)
+        parseISO(`${a.date.substring(0, 10)}T${a.startTime || "23:59:59"}`) -
+        parseISO(`${b.date.substring(0, 10)}T${b.startTime || "23:59:59"}`)
     );
     setCourse({ ...course, exams: newExams });
   }
 
-  async function editExam(exam) {
+  function editExam(exam) {
     const newExams = course.exams.map((e) => (e.id === exam.id ? exam : e));
     newExams.sort(
       (a, b) =>
-        parseISO(`${a.date.substring(0, 10)}T${a.endTime || "23:59:59"}`) -
-        parseISO(`${b.date.substring(0, 10)}T${b.endTime || "23:59:59"}`)
+        parseISO(`${a.date.substring(0, 10)}T${a.startTime || "23:59:59"}`) -
+        parseISO(`${b.date.substring(0, 10)}T${b.startTime || "23:59:59"}`)
     );
     setCourse({ ...course, exams: newExams });
   }
 
-  async function deleteExam(exam) {
+  function deleteExam(exam) {
     const newExams = course.exams.filter((e) => e.id !== exam.id);
     setCourse({ ...course, exams: newExams });
-    await axios.delete(`${process.env.REACT_APP_API_URL}/exams/${exam.id}`, {
-      headers: { Authorization: `Bearer ${userInfo.authToken}` },
-    });
   }
 
   if (!userInfo.userID || !userInfo.authToken) {
@@ -205,7 +197,7 @@ function CoursePage() {
           >
             {course.name}
           </Typography>
-          <div>
+          <div className={classes.group}>
             <Typography component="h2" variant="h5">
               Assignments
               <Tooltip title="Add new assignment">
@@ -224,12 +216,13 @@ function CoursePage() {
                   onComplete={() => completeAssignment(assignment)}
                   onEdit={editAssignment}
                   onDelete={() => deleteAssignment(assignment)}
+                  showDate
                   key={assignment.id}
                 />
               );
             })}
           </div>
-          <div>
+          <div className={classes.group}>
             <Typography component="h2" variant="h5">
               Exams
               <Tooltip title="Add new exam">
@@ -247,6 +240,7 @@ function CoursePage() {
                   exam={exam}
                   onEdit={editExam}
                   onDelete={() => deleteExam(exam)}
+                  showDate
                   key={exam.id}
                 />
               );
