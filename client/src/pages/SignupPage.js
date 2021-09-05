@@ -102,6 +102,7 @@ function SignupPage() {
               id="email"
               label="Email Address"
               name="email"
+              type="email"
               autoComplete="email"
               autoFocus
               value={user.email}
