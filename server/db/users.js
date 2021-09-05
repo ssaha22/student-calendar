@@ -3,6 +3,7 @@ const pool = new Pool();
 const { format, parseISO } = require("date-fns");
 const { findAssignmentsForUser } = require("./assignments");
 const { findExamsForUser } = require("./exams");
+const convertKeysToCamelCase = require("../utils/convertKeysToCamelCase");
 
 async function createUser(email, password) {
   const res = await pool.query(
@@ -46,13 +47,15 @@ async function findScheduleOnDate(id, date) {
     ORDER BY course_times.start_time`,
     [dayOfWeek, id]
   );
-  const courses = res.rows;
+  const courses = convertKeysToCamelCase(res.rows);
   res = await pool.query(
-    `SELECT additional_section_times.start_time, 
-    additional_section_times.end_time, additional_sections.*
+    `SELECT additional_section_times.start_time, additional_section_times.end_time, 
+    additional_sections.*, courses.name
     FROM additional_section_times
     INNER JOIN additional_sections
     ON additional_section_times.section_id = additional_sections.id
+    INNER JOIN courses
+    ON additional_sections.course_id = courses.id
     WHERE additional_section_times.day = $1
     AND additional_sections.course_id IN (
       SELECT id
@@ -62,7 +65,7 @@ async function findScheduleOnDate(id, date) {
     ORDER BY additional_section_times.start_time`,
     [dayOfWeek, id]
   );
-  const additionalSections = res.rows;
+  const additionalSections = convertKeysToCamelCase(res.rows);
   const assignments = await findAssignmentsForUser(id, date);
   const exams = await findExamsForUser(id, date);
   return { courses, additionalSections, assignments, exams };
